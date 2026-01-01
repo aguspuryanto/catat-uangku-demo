@@ -1,0 +1,5 @@
+{
+  "name": "FinanceTracker Offline",
+  "description": "A comprehensive personal finance application to track income and detailed expense categories including Mortgage, Daily Needs, Investments, and Emergency Funds, featuring offline storage and visual dashboards.",
+  "requestFramePermissions": []
+}
