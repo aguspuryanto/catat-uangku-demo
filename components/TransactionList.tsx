@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Transaction } from '../types';
-import { Trash2, ShoppingBag, Landmark, Heart, TrendingUp as Profit, AlertCircle, HelpCircle } from 'lucide-react';
+import { Trash2, ShoppingBag, Landmark, Heart, TrendingUp as Profit, AlertCircle, HelpCircle, FileDown } from 'lucide-react';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -34,11 +34,51 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
 
   const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+  const exportToCSV = () => {
+    if (transactions.length === 0) return;
+
+    const headers = ['Tanggal', 'Jenis', 'Kategori Utama', 'Sub Kategori', 'Keterangan', 'Jumlah'];
+    const rows = sortedTransactions.map(t => [
+      t.date,
+      t.type === 'income' ? 'Pemasukan' : 'Pengeluaran',
+      t.mainCategory,
+      t.subCategory === 'None' ? '-' : t.subCategory,
+      `"${t.description.replace(/"/g, '""')}"`, // Escape quotes for CSV
+      t.amount
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(e => e.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `transaksi_uang_kita_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-        <h3 className="font-bold text-slate-800">Transaksi Terakhir</h3>
-        <span className="text-sm text-slate-400 font-medium">{transactions.length} Transaksi</span>
+      <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h3 className="font-bold text-slate-800">Transaksi Terakhir</h3>
+          <span className="text-sm text-slate-400 font-medium">{transactions.length} Transaksi Terdaftar</span>
+        </div>
+        
+        <button 
+          onClick={exportToCSV}
+          disabled={transactions.length === 0}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-sm font-bold border border-slate-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <FileDown size={18} />
+          Ekspor CSV
+        </button>
       </div>
       
       <div className="overflow-x-auto">

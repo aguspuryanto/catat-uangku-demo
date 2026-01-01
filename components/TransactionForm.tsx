@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { MainCategory, SubCategory, TransactionType, Transaction } from '../types';
 import { CATEGORY_MAP } from '../constants';
-import { PlusCircle, X } from 'lucide-react';
+import { PlusCircle, X, ChevronDown } from 'lucide-react';
 
 interface TransactionFormProps {
   onAdd: (t: Transaction) => void;
@@ -53,112 +53,131 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd }) => {
       {!isOpen ? (
         <button 
           onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition-all font-semibold shadow-lg shadow-indigo-200"
+          className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-2xl hover:bg-indigo-700 transition-all font-bold shadow-xl shadow-indigo-200 active:scale-95"
         >
           <PlusCircle size={20} />
-          Tambah Transaksi
+          Tambah Transaksi Baru
         </button>
       ) : (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/50 relative animate-in fade-in zoom-in-95 duration-300">
           <button 
             onClick={() => setIsOpen(false)}
-            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+            className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-all"
           >
-            <X size={20} />
+            <X size={24} />
           </button>
           
-          <h2 className="text-lg font-bold mb-4 text-slate-800">Transaksi Baru</h2>
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-slate-900">Catat Transaksi</h2>
+            <p className="text-slate-500 text-sm mt-1">Masukkan rincian pemasukan atau pengeluaran Anda.</p>
+          </div>
           
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-500">Jenis</label>
-              <div className="flex gap-2">
-                <button 
-                  type="button"
-                  onClick={() => setType('expense')}
-                  className={`flex-1 py-2 rounded-lg border text-sm font-semibold transition-all ${type === 'expense' ? 'bg-red-50 border-red-200 text-red-600' : 'bg-white border-slate-200 text-slate-500'}`}
-                >
-                  Pengeluaran
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setType('income')}
-                  className={`flex-1 py-2 rounded-lg border text-sm font-semibold transition-all ${type === 'income' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-white border-slate-200 text-slate-500'}`}
-                >
-                  Pemasukan
-                </button>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Type Switcher */}
+              <div className="space-y-3">
+                <label className="text-sm font-bold text-slate-700 ml-1">Jenis Transaksi</label>
+                <div className="flex p-1.5 bg-slate-100 rounded-2xl gap-1">
+                  <button 
+                    type="button"
+                    onClick={() => setType('expense')}
+                    className={`flex-1 py-3 rounded-[1.125rem] text-sm font-bold transition-all ${type === 'expense' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Pengeluaran
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setType('income')}
+                    className={`flex-1 py-3 rounded-[1.125rem] text-sm font-bold transition-all ${type === 'income' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Pemasukan
+                  </button>
+                </div>
+              </div>
+
+              {/* Amount Input */}
+              <div className="space-y-3">
+                <label className="text-sm font-bold text-slate-700 ml-1">Jumlah Nominal (Rp)</label>
+                <div className="relative">
+                  <input 
+                    type="number"
+                    required
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="w-full pl-6 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-semibold focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all text-lg placeholder:text-slate-300"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              {type === 'expense' && (
+                <>
+                  {/* Category Select */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-bold text-slate-700 ml-1">Kategori Utama</label>
+                    <div className="relative">
+                      <select 
+                        value={mainCategory}
+                        onChange={handleMainCategoryChange}
+                        className="w-full pl-6 pr-12 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-700 font-semibold appearance-none focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all"
+                      >
+                        {Object.values(MainCategory).filter(c => c !== MainCategory.INCOME).map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
+                    </div>
+                  </div>
+
+                  {/* SubCategory Select */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-bold text-slate-700 ml-1">Sub Kategori</label>
+                    <div className="relative">
+                      <select 
+                        disabled={CATEGORY_MAP[mainCategory].length === 1 && CATEGORY_MAP[mainCategory][0] === 'None'}
+                        value={subCategory}
+                        onChange={(e) => setSubCategory(e.target.value as SubCategory)}
+                        className="w-full pl-6 pr-12 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-700 font-semibold appearance-none focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all disabled:opacity-50 disabled:bg-slate-100"
+                      >
+                        {CATEGORY_MAP[mainCategory].map(sub => (
+                          <option key={sub} value={sub}>{sub}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Date Input */}
+              <div className="space-y-3">
+                <label className="text-sm font-bold text-slate-700 ml-1">Tanggal Transaksi</label>
+                <input 
+                  type="date"
+                  required
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-700 font-semibold focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all"
+                />
+              </div>
+
+              {/* Description Input */}
+              <div className="space-y-3">
+                <label className="text-sm font-bold text-slate-700 ml-1">Keterangan Tambahan</label>
+                <input 
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-semibold focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all placeholder:text-slate-300"
+                  placeholder="Contoh: Belanja bulanan di pasar"
+                />
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-500">Jumlah (Rp)</label>
-              <input 
-                type="number"
-                required
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                placeholder="Contoh: 50000"
-              />
-            </div>
-
-            {type === 'expense' && (
-              <>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-slate-500">Kategori</label>
-                  <select 
-                    value={mainCategory}
-                    onChange={handleMainCategoryChange}
-                    className="w-full px-4 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  >
-                    {Object.values(MainCategory).filter(c => c !== MainCategory.INCOME).map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-slate-500">Sub Kategori</label>
-                  <select 
-                    disabled={CATEGORY_MAP[mainCategory].length === 1 && CATEGORY_MAP[mainCategory][0] === 'None'}
-                    value={subCategory}
-                    onChange={(e) => setSubCategory(e.target.value as SubCategory)}
-                    className="w-full px-4 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 disabled:bg-slate-50"
-                  >
-                    {CATEGORY_MAP[mainCategory].map(sub => (
-                      <option key={sub} value={sub}>{sub}</option>
-                    ))}
-                  </select>
-                </div>
-              </>
-            )}
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-500">Tanggal</label>
-              <input 
-                type="date"
-                required
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-500">Keterangan</label>
-              <input 
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                placeholder="Misal: Makan siang di Warteg"
-              />
-            </div>
-
-            <div className="md:col-span-2 pt-2">
+            <div className="pt-6">
               <button 
                 type="submit"
-                className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition-all"
+                className="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-bold text-lg hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-[0.98]"
               >
                 Simpan Transaksi
               </button>

@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { Transaction, MainCategory } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
-import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, LayoutGrid } from 'lucide-react';
 import { COLORS } from '../constants';
 
 interface DashboardProps {
@@ -26,6 +26,16 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
       data[t.mainCategory] = (data[t.mainCategory] || 0) + t.amount;
     });
     return Object.entries(data).map(([name, value]) => ({ name, value }));
+  }, [transactions]);
+
+  const categoryTotals = useMemo(() => {
+    const categories = Object.values(MainCategory).filter(c => c !== MainCategory.INCOME);
+    return categories.map(cat => {
+      const total = transactions
+        .filter(t => t.type === 'expense' && t.mainCategory === cat)
+        .reduce((sum, t) => sum + t.amount, 0);
+      return { name: cat, total };
+    });
   }, [transactions]);
 
   const monthlyHistory = useMemo(() => {
@@ -81,6 +91,32 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
           <p className="text-2xl font-bold text-white">{formatCurrency(balance)}</p>
         </div>
       </div>
+
+      {/* Category Expense Summary */}
+      <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-2 mb-6">
+          <LayoutGrid className="text-indigo-600" size={20} />
+          <h3 className="font-bold text-slate-800">Ringkasan Pengeluaran per Kategori</h3>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {categoryTotals.map((cat, idx) => (
+            <div key={cat.name} className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 truncate" title={cat.name}>
+                {cat.name}
+              </p>
+              <p className="text-sm font-bold text-slate-700">
+                {formatCurrency(cat.total)}
+              </p>
+              <div className="mt-2 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-indigo-500 rounded-full transition-all duration-1000" 
+                  style={{ width: `${summary.expense > 0 ? (cat.total / summary.expense) * 100 : 0}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
