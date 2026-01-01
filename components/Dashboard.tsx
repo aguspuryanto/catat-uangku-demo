@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { Transaction, MainCategory } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
-import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, LayoutGrid } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, LayoutGrid, Home, ShoppingBag, ShieldAlert, BadgeDollarSign, Heart, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { COLORS } from '../constants';
 
 interface DashboardProps {
@@ -28,6 +28,17 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
     return Object.entries(data).map(([name, value]) => ({ name, value }));
   }, [transactions]);
 
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case MainCategory.MORTGAGE: return <Home size={16} className="text-blue-500" />;
+      case MainCategory.DAILY: return <ShoppingBag size={16} className="text-orange-500" />;
+      case MainCategory.EMERGENCY: return <ShieldAlert size={16} className="text-red-500" />;
+      case MainCategory.INVESTMENT: return <BadgeDollarSign size={16} className="text-emerald-500" />;
+      case MainCategory.SOCIAL: return <Heart size={16} className="text-pink-500" />;
+      default: return <BadgeDollarSign size={16} className="text-slate-500" />;
+    }
+  };
+
   const categoryTotals = useMemo(() => {
     const categories = Object.values(MainCategory).filter(c => c !== MainCategory.INCOME);
     return categories.map(cat => {
@@ -41,7 +52,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
   const monthlyHistory = useMemo(() => {
     const data: Record<string, { month: string, income: number, expense: number }> = {};
     transactions.forEach(t => {
-      const month = t.date.substring(0, 7); // YYYY-MM
+      const month = t.date.substring(0, 7);
       if (!data[month]) data[month] = { month, income: 0, expense: 0 };
       if (t.type === 'income') data[month].income += t.amount;
       else data[month].expense += t.amount;
@@ -57,59 +68,76 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
     }).format(val);
   };
 
-  return (
-    <div className="space-y-8">
-      {/* Header Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-              <TrendingUp size={24} />
-            </div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Pemasukan</span>
-          </div>
-          <p className="text-2xl font-bold text-slate-800">{formatCurrency(summary.income)}</p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-red-50 text-red-600 rounded-xl">
-              <TrendingDown size={24} />
-            </div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Pengeluaran</span>
-          </div>
-          <p className="text-2xl font-bold text-slate-800">{formatCurrency(summary.expense)}</p>
-        </div>
+  const recentTransactions = transactions.slice(0, 3);
 
-        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-lg">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-indigo-500 text-white rounded-xl">
-              <Wallet size={24} />
-            </div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Saldo Saat Ini</span>
+  return (
+    <div className="space-y-6 sm:space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
+      {/* Premium Balance Card */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-indigo-950 p-6 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-indigo-950/40 text-white">
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl"></div>
+        
+        <div className="relative z-10">
+          <div className="flex justify-between items-center mb-6">
+            <span className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-300/80">Total Net Worth</span>
+            <div className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold border border-white/10">IDR • Indonesia</div>
           </div>
-          <p className="text-2xl font-bold text-white">{formatCurrency(balance)}</p>
+          
+          <h2 className="text-4xl sm:text-5xl font-black mb-8 tracking-tight">{formatCurrency(balance)}</h2>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-emerald-500/10 backdrop-blur-sm p-4 rounded-3xl border border-emerald-500/20">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1 bg-emerald-500 rounded-full text-white">
+                  <ArrowUpRight size={10} strokeWidth={3} />
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-wider text-emerald-400">Pemasukan</span>
+              </div>
+              <p className="font-bold text-lg">{formatCurrency(summary.income)}</p>
+            </div>
+            
+            <div className="bg-red-500/10 backdrop-blur-sm p-4 rounded-3xl border border-red-500/20">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1 bg-red-500 rounded-full text-white">
+                  <ArrowDownLeft size={10} strokeWidth={3} />
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-wider text-red-400">Pengeluaran</span>
+              </div>
+              <p className="font-bold text-lg">{formatCurrency(summary.expense)}</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Category Expense Summary */}
-      <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-2 mb-6">
-          <LayoutGrid className="text-indigo-600" size={20} />
-          <h3 className="font-bold text-slate-800">Ringkasan Pengeluaran per Kategori</h3>
+      {/* Categories Horizontal Scroll / Grid */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-2">
+            <LayoutGrid className="text-indigo-600" size={18} />
+            <h3 className="font-black text-slate-800 tracking-tight">Alokasi Dana</h3>
+          </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          {categoryTotals.map((cat, idx) => (
-            <div key={cat.name} className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 truncate" title={cat.name}>
+        
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {categoryTotals.map((cat) => (
+            <div key={cat.name} className="group bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-300">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-slate-50 rounded-xl group-hover:bg-indigo-50 transition-colors">
+                  {getCategoryIcon(cat.name)}
+                </div>
+                <span className="text-[9px] font-black text-slate-300 group-hover:text-indigo-400 transition-colors">
+                  {Math.round(summary.expense > 0 ? (cat.total / summary.expense) * 100 : 0)}%
+                </span>
+              </div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 truncate">
                 {cat.name}
               </p>
-              <p className="text-sm font-bold text-slate-700">
+              <p className="text-sm font-black text-slate-800 truncate">
                 {formatCurrency(cat.total)}
               </p>
-              <div className="mt-2 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+              <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-indigo-500 rounded-full transition-all duration-1000" 
+                  className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out" 
                   style={{ width: `${summary.expense > 0 ? (cat.total / summary.expense) * 100 : 0}%` }}
                 />
               </div>
@@ -118,63 +146,77 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
         </div>
       </section>
 
-      {/* Charts Section */}
+      {/* Main Stats Area */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Pie Chart: Expense Breakdown */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
-          <div className="flex items-center gap-2 mb-6">
-            <PieIcon className="text-indigo-600" size={20} />
-            <h3 className="font-bold text-slate-800">Komposisi Pengeluaran</h3>
+        {/* Expenses Chart */}
+        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-2">
+              <PieIcon className="text-indigo-600" size={18} />
+              <h3 className="font-black text-slate-800 tracking-tight">Komposisi Biaya</h3>
+            </div>
           </div>
-          <div className="flex-1 min-h-[300px]">
+          <div className="h-[300px]">
             {expenseBreakdown.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={expenseBreakdown}
-                    innerRadius={60}
+                    innerRadius={70}
                     outerRadius={100}
-                    paddingAngle={5}
+                    paddingAngle={10}
                     dataKey="value"
                   >
                     {expenseBreakdown.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS.chart[index % COLORS.chart.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Legend verticalAlign="bottom" height={36}/>
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '12px 16px' }}
+                    itemStyle={{ fontWeight: 'bold' }}
+                    formatter={(value: number) => formatCurrency(value)}
+                  />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-400">Belum ada data pengeluaran</div>
+              <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-2">
+                <PieIcon size={40} className="opacity-20" />
+                <p className="text-sm font-medium">Belum ada data pengeluaran</p>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Bar Chart: Monthly History */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
-          <div className="flex items-center gap-2 mb-6">
-            <TrendingUp className="text-indigo-600" size={20} />
-            <h3 className="font-bold text-slate-800">Riwayat Bulanan</h3>
+        {/* Monthly Trend */}
+        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="text-indigo-600" size={18} />
+              <h3 className="font-black text-slate-800 tracking-tight">Arus Kas Bulanan</h3>
+            </div>
           </div>
-          <div className="flex-1 min-h-[300px]">
+          <div className="h-[300px]">
             {monthlyHistory.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyHistory}>
-                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                <BarChart data={monthlyHistory} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
+                  <XAxis dataKey="month" stroke="#cbd5e1" fontSize={10} fontWeight="bold" tickLine={false} axisLine={false} dy={10} />
                   <YAxis hide />
                   <Tooltip 
-                    cursor={{fill: '#f1f5f9'}}
-                    contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                    cursor={{fill: '#f8fafc', radius: 12}}
+                    contentStyle={{borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '12px 16px'}}
                     formatter={(value: number) => formatCurrency(value)}
                   />
-                  <Legend />
-                  <Bar dataKey="income" name="Pemasukan" fill={COLORS.income} radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="expense" name="Pengeluaran" fill={COLORS.expense} radius={[4, 4, 0, 0]} />
+                  <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} iconType="circle" />
+                  <Bar dataKey="income" name="Income" fill={COLORS.income} radius={[8, 8, 8, 8]} barSize={20} />
+                  <Bar dataKey="expense" name="Expense" fill={COLORS.expense} radius={[8, 8, 8, 8]} barSize={20} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-400">Belum ada riwayat transaksi</div>
+              <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-2">
+                <TrendingUp size={40} className="opacity-20" />
+                <p className="text-sm font-medium">Data transaksi kosong</p>
+              </div>
             )}
           </div>
         </div>
