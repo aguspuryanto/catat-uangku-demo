@@ -1,14 +1,15 @@
-
 import React from 'react';
 import { Transaction } from '../types';
-import { Trash2, ShoppingBag, Landmark, Heart, TrendingUp as Profit, AlertCircle, HelpCircle, FileDown, ChevronRight, Calendar } from 'lucide-react';
+import { Trash2, ShoppingBag, Landmark, Heart, TrendingUp as Profit, AlertCircle, HelpCircle, FileDown, ChevronRight, Calendar, Plus } from 'lucide-react';
 
 interface TransactionListProps {
   transactions: Transaction[];
   onDelete: (id: string) => void;
+  isConnected?: boolean | null;
+  onAddTransaction: () => void;
 }
 
-const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelete }) => {
+const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelete, isConnected, onAddTransaction }) => {
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -16,6 +17,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
       minimumFractionDigits: 0
     }).format(val);
   };
+  // ... (keep helper functions getIcon and getCategoryColor)
 
   const getIcon = (category: string) => {
     switch (category) {
@@ -32,13 +34,13 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
     return type === 'income' ? 'text-emerald-600 bg-emerald-50' : 'text-indigo-600 bg-indigo-50';
   };
 
-  const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const sortedTransactions = [...transactions].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const exportToCSV = () => {
     if (transactions.length === 0) return;
     const headers = ['Tanggal', 'Jenis', 'Kategori Utama', 'Sub Kategori', 'Keterangan', 'Jumlah'];
     const rows = sortedTransactions.map(t => [
-      t.date,
+      t.createdAt,
       t.type === 'income' ? 'Pemasukan' : 'Pengeluaran',
       t.mainCategory,
       t.subCategory === 'None' ? '-' : t.subCategory,
@@ -58,20 +60,44 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
 
   return (
     <div className="space-y-6">
+      {/* check connection to supabase, if not connected, show error message */}
+      {isConnected === false && (
+        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
+          <AlertCircle size={20} />
+          <span className="text-sm font-bold">Gagal terhubung ke Supabase. Data mungkin tidak tersimpan.</span>
+        </div>
+      )}
+      {isConnected === true && (
+        <div className="bg-emerald-50 text-emerald-600 p-4 rounded-xl border border-emerald-100 flex items-center gap-3">
+          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+          <span className="text-sm font-bold">Terhubung ke Supabase.</span>
+        </div>
+      )}
+
       {/* List Header */}
       <div className="flex flex-row justify-between items-end px-2">
         <div>
           <h3 className="text-xl font-black text-slate-800 tracking-tight">Riwayat</h3>
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{transactions.length} Records</p>
         </div>
-        <button 
-          onClick={exportToCSV}
-          disabled={transactions.length === 0}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-2xl text-xs font-black tracking-widest uppercase transition-all disabled:opacity-30 disabled:grayscale"
-        >
-          <FileDown size={14} strokeWidth={3} />
-          <span>Export</span>
-        </button>
+        <div className="flex bg-indigo-50 rounded-2xl overflow-hidden">
+          <button
+            onClick={onAddTransaction}
+            className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-100 rounded-none text-xs font-black tracking-widest uppercase transition-all"
+          >
+            <Plus size={14} strokeWidth={3} />
+            <span>Tambah</span>
+          </button>
+          <div className="w-px bg-indigo-200 my-2"></div>
+          <button
+            onClick={exportToCSV}
+            disabled={transactions.length === 0}
+            className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-100 rounded-none text-xs font-black tracking-widest uppercase transition-all disabled:opacity-30 disabled:grayscale"
+          >
+            <FileDown size={14} strokeWidth={3} />
+            <span>Export</span>
+          </button>
+        </div>
       </div>
 
       {/* Desktop Table View */}
@@ -95,7 +121,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
                     <div className="flex flex-col">
                       <span className="font-bold text-slate-800">{t.description || 'No Description'}</span>
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 mt-1">
-                        <Calendar size={10} /> {new Date(t.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        <Calendar size={10} /> {new Date(t.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </span>
                     </div>
                   </td>
@@ -144,7 +170,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                    {t.date}
+                    {t.createdAt}
                   </span>
                   <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
                   <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest truncate">
@@ -152,7 +178,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
                   </span>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => onDelete(t.id)}
                 className="p-3 text-red-200 active:text-red-500 active:bg-red-50 rounded-2xl transition-all"
               >

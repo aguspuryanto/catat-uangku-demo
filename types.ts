@@ -10,7 +10,7 @@ export enum MainCategory {
   SOCIAL = 'Dana Sosial/Cadangan'
 }
 
-export type SubCategory = 
+export type SubCategory =
   | 'Iuran & Air' | 'Internet' | 'Listrik' | 'Bensin' | 'Pulsa' | 'Makan' | 'Dan lain2'
   | 'Saham' | 'Reksadana' | 'Kripto' | 'Deposito'
   | 'None';
@@ -21,11 +21,12 @@ export interface Transaction {
   mainCategory: MainCategory;
   subCategory: SubCategory;
   amount: number;
-  date: string;
+  createdAt: string;
   description: string;
 }
 
 export interface User {
   email: string;
+  password: string;
   isAuthenticated: boolean;
 }
