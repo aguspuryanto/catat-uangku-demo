@@ -21,7 +21,6 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       const { data, error } = await getTransactions();
-      console.log(data);
       setTransactions(data);
       if (error) setIsSupabaseConnected(false);
       else setIsSupabaseConnected(true);
