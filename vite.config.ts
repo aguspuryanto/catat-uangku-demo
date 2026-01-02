@@ -6,10 +6,6 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
-    // server: {
-    //   port: 5173,
-    //   host: '0.0.0.0',
-    // },
     envPrefix: ['VITE_', 'REACT_APP_'],
     plugins: [react(), tailwindcss()],
     define: {
