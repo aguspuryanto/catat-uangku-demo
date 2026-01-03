@@ -52,7 +52,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
   const monthlyHistory = useMemo(() => {
     const data: Record<string, { month: string, income: number, expense: number }> = {};
     transactions.forEach(t => {
-      const month = t.createdAt.substring(0, 7);
+      const month = t.date.substring(0, 7);
       if (!data[month]) data[month] = { month, income: 0, expense: 0 };
       if (t.type === 'income') data[month].income += t.amount;
       else data[month].expense += t.amount;
@@ -76,15 +76,15 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
       <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-indigo-950 p-6 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-indigo-950/40 text-white">
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl"></div>
-
+        
         <div className="relative z-10">
           <div className="flex justify-between items-center mb-6">
             <span className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-300/80">Total Net Worth</span>
             <div className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold border border-white/10">IDR • Indonesia</div>
           </div>
-
+          
           <h2 className="text-4xl sm:text-5xl font-black mb-8 tracking-tight">{formatCurrency(balance)}</h2>
-
+          
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-emerald-500/10 backdrop-blur-sm p-4 rounded-3xl border border-emerald-500/20">
               <div className="flex items-center gap-2 mb-2">
@@ -95,7 +95,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
               </div>
               <p className="font-bold text-lg">{formatCurrency(summary.income)}</p>
             </div>
-
+            
             <div className="bg-red-500/10 backdrop-blur-sm p-4 rounded-3xl border border-red-500/20">
               <div className="flex items-center gap-2 mb-2">
                 <div className="p-1 bg-red-500 rounded-full text-white">
@@ -117,7 +117,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
             <h3 className="font-black text-slate-800 tracking-tight">Alokasi Dana</h3>
           </div>
         </div>
-
+        
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {categoryTotals.map((cat) => (
             <div key={cat.name} className="group bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-300">
@@ -136,8 +136,8 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
                 {formatCurrency(cat.total)}
               </p>
               <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out"
+                <div 
+                  className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out" 
                   style={{ width: `${summary.expense > 0 ? (cat.total / summary.expense) * 100 : 0}%` }}
                 />
               </div>
@@ -171,7 +171,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
                       <Cell key={`cell-${index}`} fill={COLORS.chart[index % COLORS.chart.length]} />
                     ))}
                   </Pie>
-                  <Tooltip
+                  <Tooltip 
                     contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '12px 16px' }}
                     itemStyle={{ fontWeight: 'bold' }}
                     formatter={(value: number) => formatCurrency(value)}
@@ -202,9 +202,9 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
                 <BarChart data={monthlyHistory} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
                   <XAxis dataKey="month" stroke="#cbd5e1" fontSize={10} fontWeight="bold" tickLine={false} axisLine={false} dy={10} />
                   <YAxis hide />
-                  <Tooltip
-                    cursor={{ fill: '#f8fafc', radius: 12 }}
-                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '12px 16px' }}
+                  <Tooltip 
+                    cursor={{fill: '#f8fafc', radius: 12}}
+                    contentStyle={{borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '12px 16px'}}
                     formatter={(value: number) => formatCurrency(value)}
                   />
                   <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} iconType="circle" />

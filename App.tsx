@@ -6,32 +6,28 @@ import TransactionList from './components/TransactionList';
 import TransactionForm from './components/TransactionForm';
 import LoginPage from './pages/LoginPage';
 import { Transaction, User } from './types';
+import { saveTransactions, loadTransactions } from './storage';
 import { Plus } from 'lucide-react';
-
-import { getTransactions, createTransaction, removeTransaction } from './utils/supabase';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User>({ email: '', isAuthenticated: false });
   const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions'>('dashboard');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-
-  const [isSupabaseConnected, setIsSupabaseConnected] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data, error } = await getTransactions();
-      setTransactions(data);
-      if (error) setIsSupabaseConnected(false);
-      else setIsSupabaseConnected(true);
-    };
-    fetchData();
-
+    const data = loadTransactions();
+    setTransactions(data);
     const savedUser = localStorage.getItem('user_session');
     if (savedUser) {
       setUser({ email: savedUser, isAuthenticated: true });
     }
   }, []);
+
+  useEffect(() => {
+    if (transactions.length > 0) {
+      saveTransactions(transactions);
+    }
+  }, [transactions]);
 
   const handleLogin = (email: string) => {
     setUser({ email, isAuthenticated: true });
@@ -43,41 +39,16 @@ const App: React.FC = () => {
     localStorage.removeItem('user_session');
   };
 
-  const addTransaction = async (t: Transaction) => {
-    // Optimistic update
-    const optimisticId = t.id;
-    setTransactions(prev => [t, ...prev]);
-
-    try {
-      const savedData = await createTransaction(t);
-      if (savedData) {
-        setTransactions(prev => prev.map(item =>
-          item.id === optimisticId ? { ...item, id: savedData.id.toString() } : item
-        ));
-      }
-    } catch (error: any) {
-      console.error("Failed to save transaction to Supabase", error);
-      // Revert optimistic update
-      setTransactions(prev => prev.filter(item => item.id !== optimisticId));
-
-      if (error.code === '42501') {
-        alert("Eits! Database terkunci. 🔒\n\nUntuk mengatasinya:\n1. Buka Supabase Dashboard > SQL Editor\n2. Jalankan perintah SQL yang ada di file FIX_DATABASE_ACCESS.md\n\nError: " + error.message);
-      } else {
-        alert("Gagal menyimpan transaksi. Cek koneksi internet Anda.");
-      }
-    }
+  const addTransaction = (t: Transaction) => {
+    const updated = [t, ...transactions];
+    setTransactions(updated);
+    saveTransactions(updated);
   };
 
-  const deleteTransaction = async (id: string) => {
-    // Optimistic update
+  const deleteTransaction = (id: string) => {
     const updated = transactions.filter(t => t.id !== id);
     setTransactions(updated);
-
-    try {
-      await removeTransaction(id);
-    } catch (error) {
-      console.error("Failed to delete transaction from Supabase", error);
-    }
+    saveTransactions(updated);
   };
 
   if (!user.isAuthenticated) {
@@ -85,9 +56,9 @@ const App: React.FC = () => {
   }
 
   return (
-    <Layout
-      onLogout={handleLogout}
-      activeTab={activeTab}
+    <Layout 
+      onLogout={handleLogout} 
+      activeTab={activeTab} 
       setActiveTab={setActiveTab}
     >
       <div className="max-w-6xl mx-auto pb-10">
@@ -98,11 +69,11 @@ const App: React.FC = () => {
             </h1>
             <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px]">Your Financial Ecosystem</p>
           </div>
-
+          
           {/* Desktop Add Button */}
-          {/* <div className="hidden sm:block">
-            <TransactionForm onAdd={addTransaction} />
-          </div> */}
+          <div className="hidden sm:block">
+             <TransactionForm onAdd={addTransaction} />
+          </div>
         </header>
 
         {activeTab === 'dashboard' && (
@@ -111,20 +82,17 @@ const App: React.FC = () => {
 
         {activeTab === 'transactions' && (
           <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
-            <TransactionForm onAdd={addTransaction} isOpen={isFormOpen} onOpenChange={setIsFormOpen} />
-            <TransactionList
-              transactions={transactions}
-              onDelete={deleteTransaction}
-              isConnected={isSupabaseConnected}
-              onAddTransaction={() => setIsFormOpen(true)}
-            />
+            <div className="sm:hidden">
+              <TransactionForm onAdd={addTransaction} />
+            </div>
+            <TransactionList transactions={transactions} onDelete={deleteTransaction} />
           </div>
         )}
       </div>
 
       {/* Mobile Floating Action Button (Only on Dashboard for quick entry) */}
       {activeTab === 'dashboard' && (
-        <button
+        <button 
           onClick={() => setActiveTab('transactions')}
           className="md:hidden fixed bottom-24 right-6 w-16 h-16 bg-indigo-600 text-white rounded-[2rem] shadow-2xl shadow-indigo-500/50 flex items-center justify-center z-50 active:scale-90 transition-transform"
         >
