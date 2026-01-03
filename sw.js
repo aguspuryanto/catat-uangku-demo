@@ -1,23 +1,23 @@
 
-const CACHE_NAME = 'uangkita-v1';
-const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
+const CACHE_NAME = 'uangkita-v2';
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  'https://cdn.tailwindcss.com'
 ];
 
-// Install Event
+// Install Event - Caching basic assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+      console.log('SW: Pre-caching core assets');
+      return cache.addAll(STATIC_ASSETS);
+    }).catch(err => console.log('SW: Install caching error', err))
   );
   self.skipWaiting();
 });
 
-// Activate Event
+// Activate Event - Cleaning up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -29,33 +29,40 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Event - Cache First Strategy
+// Fetch Event - Dynamic Caching Strategy
 self.addEventListener('fetch', (event) => {
-  // Only cache GET requests
+  // Ignore non-GET requests (like POST)
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
+      // Return cached asset if available
       if (cachedResponse) {
         return cachedResponse;
       }
+
+      // Otherwise fetch from network
       return fetch(event.request).then((networkResponse) => {
-        // Cache external modules from esm.sh or fonts
-        if (
+        // Cache external dependencies dynamically (scripts, fonts)
+        const isExternal = 
           event.request.url.includes('esm.sh') || 
           event.request.url.includes('gstatic.com') ||
-          event.request.url.includes('googleapis.com')
-        ) {
+          event.request.url.includes('googleapis.com');
+
+        if (isExternal && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
           });
         }
         return networkResponse;
+      }).catch(() => {
+        // Return index.html as fallback for navigation requests
+        if (event.request.mode === 'navigate') {
+          return caches.match('/');
+        }
+        return null;
       });
-    }).catch(() => {
-      // Offline fallback can be added here if needed
-      return caches.match('./index.html');
     })
   );
 });
