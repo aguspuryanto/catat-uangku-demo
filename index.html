@@ -9,7 +9,7 @@
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#4f46e5">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="UangKita">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2489/2489756.png">
     <link rel="manifest" href="manifest.json">
@@ -19,10 +19,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         /* Prevent elastic scrolling on mobile */
-        html, body { 
-            overscroll-behavior-y: none;
-            height: 100%;
-        }
+        html, body { overscroll-behavior-y: contain; }
     </style>
 <script type="importmap">
 {
@@ -42,14 +39,9 @@
       // Register Service Worker for PWA
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // Menggunakan './sw.js' untuk memastikan pencarian file di direktori yang sama
           navigator.serviceWorker.register('./sw.js')
-            .then(reg => {
-              console.log('UangKita SW Registered! Scope:', reg.scope);
-            })
-            .catch(err => {
-              console.error('UangKita SW Registration failed:', err);
-            });
+            .then(reg => console.log('SW Registered!', reg))
+            .catch(err => console.log('SW Register Error:', err));
         });
       }
     </script>
