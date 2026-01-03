@@ -1,23 +1,22 @@
 
-const CACHE_NAME = 'uangkita-v2';
+const CACHE_NAME = 'uangkita-v3';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
+  './',
+  './index.html',
   'https://cdn.tailwindcss.com'
 ];
 
-// Install Event - Caching basic assets
+// Install Event - Caching core assets
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('SW: Pre-caching core assets');
       return cache.addAll(STATIC_ASSETS);
-    }).catch(err => console.log('SW: Install caching error', err))
+    })
   );
-  self.skipWaiting();
 });
 
-// Activate Event - Cleaning up old caches
+// Activate Event - Clear old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -29,21 +28,18 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Event - Dynamic Caching Strategy
+// Fetch Event - Cache First with Dynamic Updates
 self.addEventListener('fetch', (event) => {
-  // Ignore non-GET requests (like POST)
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      // Return cached asset if available
       if (cachedResponse) {
         return cachedResponse;
       }
 
-      // Otherwise fetch from network
       return fetch(event.request).then((networkResponse) => {
-        // Cache external dependencies dynamically (scripts, fonts)
+        // Cache dynamic external dependencies
         const isExternal = 
           event.request.url.includes('esm.sh') || 
           event.request.url.includes('gstatic.com') ||
@@ -57,9 +53,9 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       }).catch(() => {
-        // Return index.html as fallback for navigation requests
+        // Fallback for navigation (offline support)
         if (event.request.mode === 'navigate') {
-          return caches.match('/');
+          return caches.match('./index.html') || caches.match('./');
         }
         return null;
       });

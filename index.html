@@ -39,12 +39,13 @@
 <body class="bg-slate-50 text-slate-900">
     <div id="root"></div>
     <script>
-      // Register Service Worker for PWA with scope /
+      // Register Service Worker for PWA
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js', { scope: './' })
+          // Menggunakan './sw.js' untuk memastikan pencarian file di direktori yang sama
+          navigator.serviceWorker.register('./sw.js')
             .then(reg => {
-              console.log('UangKita SW Registered with scope:', reg.scope);
+              console.log('UangKita SW Registered! Scope:', reg.scope);
             })
             .catch(err => {
               console.error('UangKita SW Registration failed:', err);
