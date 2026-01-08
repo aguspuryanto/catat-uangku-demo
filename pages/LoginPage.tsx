@@ -33,11 +33,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
         <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50">
           <h2 className="text-xl font-bold text-slate-800 mb-6">Masuk ke Akun</h2>
-          
+
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-500">Alamat Email</label>
-              <input 
+              <input
                 type="email"
                 required
                 value={email}
@@ -49,7 +49,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-500">Kata Sandi</label>
-              <input 
+              <input
                 type="password"
                 required
                 value={password}
@@ -61,7 +61,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
             {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
 
-            <button 
+            <button
               type="submit"
               className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 mt-4"
             >
@@ -74,9 +74,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <p className="text-xs text-slate-500 font-mono mt-1">admin@example.com / password123</p>
           </div>
         </div>
-        
+
         <p className="text-center mt-8 text-slate-400 text-sm">
-          &copy; 2024 UangKita Finance Tracker. Data disimpan secara offline di browser Anda.
+          &copy; 2024 UangKita Finance Tracker. Data disimpan secara aman di Supabase Cloud.
         </p>
       </div>
     </div>

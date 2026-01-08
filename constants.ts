@@ -4,8 +4,7 @@ import { MainCategory, SubCategory } from './types';
 export const CATEGORY_MAP: Record<MainCategory, SubCategory[]> = {
   [MainCategory.INCOME]: ['None'],
   [MainCategory.MORTGAGE]: ['None'],
-  [MainCategory.DAILY]: ['Bensin', 'Pulsa', 'Makan', 'Dan lain2'],
-  [MainCategory.UTILITIES]: ['Iuran & Air', 'Internet', 'Listrik'],
+  [MainCategory.DAILY]: ['Iuran & Air', 'Internet', 'Listrik', 'Bensin', 'Pulsa', 'Makan', 'Dan lain2'],
   [MainCategory.EMERGENCY]: ['None'],
   [MainCategory.INVESTMENT]: ['Saham', 'Reksadana', 'Kripto', 'Deposito'],
   [MainCategory.SOCIAL]: ['None']
