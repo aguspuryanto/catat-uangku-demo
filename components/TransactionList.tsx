@@ -159,45 +159,51 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
       </div>
 
       {/* Mobile Card View */}
-      <div className="md:hidden">
+      <div className="md:hidden -mx-4">
         {sortedTransactions.length === 0 ? (
-          <div className="bg-white p-20 rounded-[3rem] text-center text-slate-300 font-black uppercase tracking-widest border border-slate-100">Empty</div>
+          <div className="bg-white p-12 mx-4 rounded-2xl text-center text-slate-300 font-bold">
+            Tidak ada transaksi
+          </div>
         ) : (
           <div className="divide-y divide-slate-100">
             {sortedTransactions.map((t) => (
-              <div key={t.id} className="bg-white p-4 first:rounded-t-[2rem] last:rounded-b-[2rem] border-x border-slate-100 first:border-t first:border-t-slate-100 last:border-b last:border-b-slate-100 shadow-sm flex items-center gap-3 active:bg-slate-50 transition-all" onClick={() => handleTransactionClick(t)}>
-                <div className={`p-3 rounded-3xl shrink-0 ${getCategoryColor(t.type)} shadow-sm`}>
-                  {getIcon(t.mainCategory)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-black text-slate-800 truncate pr-2 tracking-tight">{t.description || t.mainCategory}</h4>
-                    <span className={`font-black shrink-0 text-sm ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-900'}`}>
-                      {t.type === 'income' ? '+' : '-'} {formatCurrency(t.amount)}
-                    </span>
+              <div 
+                key={t.id} 
+                className={`px-4 py-3 first:rounded-t-2xl last:rounded-b-2xl border-b transition-colors ${t.type === 'expense' ? 'bg-red-50 active:bg-red-100 border-red-100' : 'bg-white active:bg-slate-50 border-slate-100'}`}
+                onClick={() => handleTransactionClick(t)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-2xl shrink-0 ${getCategoryColor(t.type)}`}>
+                    {getIcon(t.mainCategory)}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                      {new Date(t.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
-                    <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
-                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest truncate">
-                      {t.mainCategory}
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center">
+                      <h4 className={`font-bold text-sm truncate pr-2 ${t.type === 'expense' ? 'text-red-600' : 'text-slate-800'}`}>
+                        {t.description || t.mainCategory}
+                      </h4>
+                      <span className={`font-bold text-sm whitespace-nowrap ${t.type === 'income' ? 'text-emerald-600' : t.type === 'expense' ? 'text-red-600' : 'text-slate-900'}`}>
+                        {t.type === 'income' ? '+' : '-'} {formatCurrency(t.amount)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-0.5 mt-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs whitespace-nowrap ${t.type === 'expense' ? 'text-red-400' : 'text-slate-500'}`}>
+                          {new Date(t.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
+                      <span className={`text-xs font-medium ${t.type === 'expense' ? 'text-red-500' : 'text-indigo-500'}`}>
+                        {t.mainCategory}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => onDelete(t.id)}
-                  className="p-3 text-red-200 active:text-red-500 active:bg-red-50 rounded-2xl transition-all"
-                >
-                  <Trash2 size={18} />
-                </button>
               </div>
             ))}
           </div>
         )}
       </div>
 
+      {/* Detail Transaction Modal */}
       {selectedTransaction && (
         <div 
           className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
