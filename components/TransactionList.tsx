@@ -260,7 +260,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
                   </div>
                 )}
               </div>
-              <div className="pt-4 border-t border-slate-100">
+              {/* <div className="pt-4 border-t border-slate-100">
                 <button
                   onClick={() => {
                     onDelete(selectedTransaction.id);
@@ -271,7 +271,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
                   <Trash2 size={18} />
                   Hapus Transaksi
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
