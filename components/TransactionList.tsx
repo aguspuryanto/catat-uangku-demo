@@ -58,6 +58,13 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
     document.body.removeChild(link);
   };
 
+  // Add this state at the top of your component
+  const [selectedTransaction, setSelectedTransaction] = React.useState<Transaction | null>(null);
+  // Add this function inside your component
+  const handleTransactionClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+  };
+
   return (
     <div className="space-y-6">
       {/* check connection to supabase, if not connected, show error message */}
@@ -152,42 +159,123 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
       </div>
 
       {/* Mobile Card View */}
-      <div className="md:hidden space-y-4">
+      <div className="md:hidden">
         {sortedTransactions.length === 0 ? (
           <div className="bg-white p-20 rounded-[3rem] text-center text-slate-300 font-black uppercase tracking-widest border border-slate-100">Empty</div>
         ) : (
-          sortedTransactions.map((t) => (
-            <div key={t.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4 active:scale-[0.98] transition-all">
-              <div className={`p-4 rounded-3xl shrink-0 ${getCategoryColor(t.type)} shadow-sm`}>
-                {getIcon(t.mainCategory)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start mb-1">
-                  <h4 className="font-black text-slate-800 truncate pr-2 tracking-tight">{t.description || t.mainCategory}</h4>
-                  <span className={`font-black shrink-0 text-sm ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-900'}`}>
-                    {t.type === 'income' ? '+' : '-'} {formatCurrency(t.amount)}
-                  </span>
+          <div className="divide-y divide-slate-100">
+            {sortedTransactions.map((t) => (
+              <div key={t.id} className="bg-white p-4 first:rounded-t-[2rem] last:rounded-b-[2rem] border-x border-slate-100 first:border-t first:border-t-slate-100 last:border-b last:border-b-slate-100 shadow-sm flex items-center gap-3 active:bg-slate-50 transition-all" onClick={() => handleTransactionClick(t)}>
+                <div className={`p-3 rounded-3xl shrink-0 ${getCategoryColor(t.type)} shadow-sm`}>
+                  {getIcon(t.mainCategory)}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                    {t.createdAt}
-                  </span>
-                  <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
-                  <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest truncate">
-                    {t.mainCategory}
-                  </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start mb-1">
+                    <h4 className="font-black text-slate-800 truncate pr-2 tracking-tight">{t.description || t.mainCategory}</h4>
+                    <span className={`font-black shrink-0 text-sm ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                      {t.type === 'income' ? '+' : '-'} {formatCurrency(t.amount)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                      {new Date(t.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                    <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
+                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest truncate">
+                      {t.mainCategory}
+                    </span>
+                  </div>
                 </div>
+                <button
+                  onClick={() => onDelete(t.id)}
+                  className="p-3 text-red-200 active:text-red-500 active:bg-red-50 rounded-2xl transition-all"
+                >
+                  <Trash2 size={18} />
+                </button>
               </div>
-              <button
-                onClick={() => onDelete(t.id)}
-                className="p-3 text-red-200 active:text-red-500 active:bg-red-50 rounded-2xl transition-all"
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
+
+      {selectedTransaction && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedTransaction(null)}
+        >
+          <div 
+            className="bg-white rounded-3xl w-full max-w-md p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-6">
+              <h2 className="text-xl font-black text-slate-800">Detail Transaksi</h2>
+              <button 
+                onClick={() => setSelectedTransaction(null)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className={`p-4 rounded-3xl ${getCategoryColor(selectedTransaction.type)}`}>
+                  {getIcon(selectedTransaction.mainCategory)}
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-800 text-lg">
+                    {selectedTransaction.description || selectedTransaction.mainCategory}
+                  </h3>
+                  <p className="text-slate-500 text-sm">
+                    {new Date(selectedTransaction.createdAt).toLocaleDateString('id-ID', { 
+                      weekday: 'long', 
+                      day: 'numeric', 
+                      month: 'long', 
+                      year: 'numeric' 
+                    })}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Jumlah</span>
+                  <span className={`font-black ${selectedTransaction.type === 'income' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                    {selectedTransaction.type === 'income' ? '+' : '-'} {formatCurrency(selectedTransaction.amount)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Kategori</span>
+                  <span className="font-medium text-slate-800">{selectedTransaction.mainCategory}</span>
+                </div>
+                {selectedTransaction.subCategory && selectedTransaction.subCategory !== 'None' && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Sub Kategori</span>
+                    <span className="font-medium text-slate-800">{selectedTransaction.subCategory}</span>
+                  </div>
+                )}
+                {selectedTransaction.notes && (
+                  <div className="pt-4 border-t border-slate-100">
+                    <h4 className="text-slate-500 mb-2">Catatan</h4>
+                    <p className="text-slate-800">{selectedTransaction.notes}</p>
+                  </div>
+                )}
+              </div>
+              <div className="pt-4 border-t border-slate-100">
+                <button
+                  onClick={() => {
+                    onDelete(selectedTransaction.id);
+                    setSelectedTransaction(null);
+                  }}
+                  className="w-full py-3 bg-red-50 text-red-500 rounded-xl font-bold flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={18} />
+                  Hapus Transaksi
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
