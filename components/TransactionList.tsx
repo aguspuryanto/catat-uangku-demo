@@ -4,7 +4,7 @@ import { Transaction, MainCategory } from '../types';
 import { 
   Trash2, ShoppingBag, Landmark, Heart, TrendingUp as Profit, 
   AlertCircle, HelpCircle, FileDown, Calendar, Filter, 
-  ArrowUpDown, XCircle, Search
+  ArrowUpDown, XCircle, Search, Zap, TrendingUp
 } from 'lucide-react';
 
 interface TransactionListProps {
@@ -34,12 +34,14 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
 
   const getIcon = (category: string) => {
     switch (category) {
-      case 'Angsuran KPR': return <Landmark size={20} />;
-      case 'Kebutuhan Harian': return <ShoppingBag size={20} />;
-      case 'Pemasukan': return <Profit size={20} />;
-      case 'Dana Sosial/Cadangan': return <Heart size={20} />;
-      case 'Dana Darurat': return <AlertCircle size={20} />;
-      default: return <HelpCircle size={20} />;
+      case 'Angsuran KPR': return <Landmark size={18} />;
+      case 'Kebutuhan Harian': return <ShoppingBag size={18} />;
+      case 'Utilitas': return <Zap size={18} />;
+      case 'Pemasukan': return <Profit size={18} />;
+      case 'Dana Sosial/Cadangan': return <Heart size={18} />;
+      case 'Dana Darurat': return <AlertCircle size={18} />;
+      case 'Investasi': return <TrendingUp size={18} />;
+      default: return <HelpCircle size={18} />;
     }
   };
 
@@ -319,41 +321,52 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
         </table>
       </div>
 
-      {/* Mobile Card View */}
-      <div className="md:hidden space-y-4">
+      {/* Mobile Card View (Updated to be more concise and aesthetic) */}
+      <div className="md:hidden space-y-3">
         {filteredAndSortedTransactions.length === 0 ? (
-          <div className="bg-white p-20 rounded-[3rem] text-center border border-slate-100">
-             <p className="text-slate-300 font-black uppercase tracking-widest">Kosong</p>
-             <button onClick={resetFilters} className="mt-4 text-indigo-500 font-black text-xs uppercase tracking-widest">Reset Filter</button>
+          <div className="bg-white p-20 rounded-[3rem] text-center border border-slate-100 shadow-sm">
+             <p className="text-slate-300 font-black uppercase tracking-widest text-sm">Tidak ada transaksi</p>
+             <button onClick={resetFilters} className="mt-4 text-indigo-500 font-black text-[10px] uppercase tracking-widest">Reset Filter</button>
           </div>
         ) : (
           filteredAndSortedTransactions.map((t) => (
-            <div key={t.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4 active:scale-[0.98] transition-all">
-              <div className={`p-4 rounded-3xl shrink-0 ${getCategoryColor(t.type)} shadow-sm`}>
+            <div key={t.id} className="bg-white p-4 rounded-[1.75rem] border border-slate-100 shadow-sm flex items-center gap-4 active:scale-[0.98] transition-all duration-200">
+              {/* Category Icon */}
+              <div className={`p-3.5 rounded-2xl shrink-0 ${getCategoryColor(t.type)}`}>
                 {getIcon(t.mainCategory)}
               </div>
+              
+              {/* Transaction Details */}
               <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start mb-1">
-                  <h4 className="font-black text-slate-800 truncate pr-2 tracking-tight">{t.description || t.mainCategory}</h4>
+                <div className="flex justify-between items-center mb-0.5">
+                  <h4 className="font-bold text-slate-800 truncate pr-2 tracking-tight text-sm">
+                    {t.description || t.mainCategory}
+                  </h4>
                   <span className={`font-black shrink-0 text-sm ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-900'}`}>
                     {t.type === 'income' ? '+' : '-'} {formatCurrency(t.amount)}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                    {t.date}
-                  </span>
+                
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      {t.mainCategory}
+                    </span>
+                  </div>
                   <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
-                  <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest truncate">
-                    {t.mainCategory}
+                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter">
+                    {new Date(t.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
                   </span>
                 </div>
               </div>
+
+              {/* Action Button */}
               <button 
                 onClick={() => onDelete(t.id)}
-                className="p-3 text-red-200 active:text-red-500 active:bg-red-50 rounded-2xl transition-all"
+                className="p-2.5 text-slate-200 active:text-red-500 active:bg-red-50 rounded-xl transition-all"
+                aria-label="Hapus transaksi"
               >
-                <Trash2 size={18} />
+                <Trash2 size={16} />
               </button>
             </div>
           ))

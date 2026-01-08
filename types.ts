@@ -5,6 +5,7 @@ export enum MainCategory {
   INCOME = 'Pemasukan',
   MORTGAGE = 'Angsuran KPR',
   DAILY = 'Kebutuhan Harian',
+  UTILITIES = 'Utilitas',
   EMERGENCY = 'Dana Darurat',
   INVESTMENT = 'Investasi',
   SOCIAL = 'Dana Sosial/Cadangan'

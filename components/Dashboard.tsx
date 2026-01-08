@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { Transaction, MainCategory } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
-import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, LayoutGrid, Home, ShoppingBag, ShieldAlert, BadgeDollarSign, Heart, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, LayoutGrid, Home, ShoppingBag, ShieldAlert, BadgeDollarSign, Heart, ArrowUpRight, ArrowDownLeft, Zap } from 'lucide-react';
 import { COLORS } from '../constants';
 
 interface DashboardProps {
@@ -32,6 +32,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
     switch (category) {
       case MainCategory.MORTGAGE: return <Home size={16} className="text-blue-500" />;
       case MainCategory.DAILY: return <ShoppingBag size={16} className="text-orange-500" />;
+      case MainCategory.UTILITIES: return <Zap size={16} className="text-yellow-500" />;
       case MainCategory.EMERGENCY: return <ShieldAlert size={16} className="text-red-500" />;
       case MainCategory.INVESTMENT: return <BadgeDollarSign size={16} className="text-emerald-500" />;
       case MainCategory.SOCIAL: return <Heart size={16} className="text-pink-500" />;
