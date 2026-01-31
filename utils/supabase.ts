@@ -7,6 +7,27 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
+export const formatRupiah = (amount: number): string => {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0
+  }).format(amount);
+};
+
+export const formatRupiahHuman = (amount: number): string => {
+  if (amount >= 1000000000) {
+    return `Rp ${(amount / 1000000000).toFixed(1).replace(/\.0$/, '')} Miliar`;
+  }
+  if (amount >= 1000000) {
+    return `Rp ${(amount / 1000000).toFixed(1).replace(/\.0$/, '')} Juta`;
+  }
+  if (amount >= 1000) {
+    return `Rp ${(amount / 1000).toFixed(1).replace(/\.0$/, '')} Ribu`;
+  }
+  return formatRupiah(amount);
+};
+
 export const getTransactions = async (): Promise<{ data: Transaction[], error: any }> => {
     const { data, error } = await supabase
         .from('transaksi')

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calculator, Calendar, CheckCircle, XCircle, Plus, Trash2 } from 'lucide-react';
 import type { Angsuran, Pinjaman } from '../types';
-import { updateAngsuranStatus } from '../utils/supabase';
+import { updateAngsuranStatus, formatRupiahHuman, formatRupiah } from '../utils/supabase';
 
 const Pinjaman: React.FC = () => {
   const [pinjaman, setPinjaman] = useState<Pinjaman | null>(null);
@@ -113,14 +113,6 @@ const Pinjaman: React.FC = () => {
     }
   };
 
-  const formatRupiah = (amount: number): string => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
-
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('id-ID', {
@@ -139,7 +131,27 @@ const Pinjaman: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Total Pinjaman Card - Pindah ke Atas */}
+      {pinjaman && (
+        <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-3xl p-6 sm:p-8 shadow-xl text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-indigo-100 text-sm sm:text-base font-medium mb-2">Total Pinjaman</p>
+              <p className="text-3xl sm:text-4xl font-bold">{formatRupiahHuman(pinjaman.jumlahPinjaman)}</p>
+              <p className="text-indigo-200 text-xs sm:text-sm mt-2">
+                Bunga: {pinjaman.bungaTahunan}%/tahun • Tenor: {pinjaman.tenorBulan} bulan
+              </p>
+            </div>
+            <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
+              <Calculator size={32} className="text-white" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
+
+      {pinjaman && showForm && (
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -161,48 +173,20 @@ const Pinjaman: React.FC = () => {
             </button>
           )}
         </div>
-
-        {pinjaman && (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-4 sm:p-5 border border-slate-200/50 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 bg-slate-500/10 rounded-lg flex items-center justify-center">
-                  <Calculator size={16} className="text-slate-600" />
-                </div>
-                <p className="text-slate-500 text-xs sm:text-sm font-medium">Total Pinjaman</p>
+        
+        <div className="grid grid-cols-1 gap-3 sm:gap-4">
+          <div className="bg-gradient-to-br from-indigo-50 to-blue-100 rounded-2xl p-4 sm:p-5 border border-indigo-200/50 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center">
+                <Calendar size={16} className="text-indigo-600" />
               </div>
-              <p className="text-lg sm:text-xl font-bold text-slate-900">{formatRupiah(pinjaman.jumlahPinjaman)}</p>
+              <p className="text-indigo-600 text-xs sm:text-sm font-medium">Progress Pembayaran</p>
             </div>
-            <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl p-4 sm:p-5 border border-green-200/50 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
-                  <CheckCircle size={16} className="text-green-600" />
-                </div>
-                <p className="text-green-600 text-xs sm:text-sm font-medium">Terbayar</p>
-              </div>
-              <p className="text-lg sm:text-xl font-bold text-green-700">{formatRupiah(totalTerbayar)}</p>
-            </div>
-            <div className="bg-gradient-to-br from-orange-50 to-amber-100 rounded-2xl p-4 sm:p-5 border border-orange-200/50 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 bg-orange-500/10 rounded-lg flex items-center justify-center">
-                  <XCircle size={16} className="text-orange-600" />
-                </div>
-                <p className="text-orange-600 text-xs sm:text-sm font-medium">Belum Terbayar</p>
-              </div>
-              <p className="text-lg sm:text-xl font-bold text-orange-700">{formatRupiah(totalBelumTerbayar)}</p>
-            </div>
-            <div className="bg-gradient-to-br from-indigo-50 to-blue-100 rounded-2xl p-4 sm:p-5 border border-indigo-200/50 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center">
-                  <Calendar size={16} className="text-indigo-600" />
-                </div>
-                <p className="text-indigo-600 text-xs sm:text-sm font-medium">Progress</p>
-              </div>
-              <p className="text-lg sm:text-xl font-bold text-indigo-700">{persenTerbayar.toFixed(1)}%</p>
-            </div>
+            <p className="text-lg sm:text-xl font-bold text-indigo-700">{persenTerbayar.toFixed(1)}%</p>
           </div>
-        )}
+        </div>
       </div>
+      )}
 
       {/* Form Pinjaman Baru */}
       {showForm && (
@@ -267,14 +251,14 @@ const Pinjaman: React.FC = () => {
       {/* Detail Pinjaman */}
       {pinjaman && (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-          <div className="flex items-center justify-between mb-6">
+          {/* <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-slate-900">Detail Pinjaman</h3>
             <div className="flex items-center gap-4 text-sm text-slate-600">
               <span>Bunga: {pinjaman.bungaTahunan}%/tahun</span>
               <span>Tenor: {pinjaman.tenorBulan} bulan</span>
               <span>Tanggal: {formatDate(pinjaman.tanggalPinjaman)}</span>
             </div>
-          </div>
+          </div> */}
 
           {/* Progress Bar */}
           <div className="mb-6">
