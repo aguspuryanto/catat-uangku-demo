@@ -10,23 +10,63 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
+  // console.log(transactions, '_transactions');
+  
+  // Filter transaksi berdasarkan periode kustom: 29 bulan sebelumnya hingga 28 bulan saat ini
+  const filteredTransactions = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-11
+    const currentDay = now.getDate();
+    
+    // Tentukan periode: 29 bulan sebelumnya hingga 28 bulan saat ini
+    let startDate, endDate;
+    let displayYear = currentYear;
+    let displayMonth = currentMonth;
+    
+    // Jika tanggal sudah melewati 28, pindah ke bulan berikutnya
+    if (currentDay > 28) {
+      if (currentMonth === 11) { // Desember, pindah ke Januari tahun berikutnya
+        displayYear = currentYear + 1;
+        displayMonth = 0;
+      } else {
+        displayMonth = currentMonth + 1;
+      }
+    }
+    
+    // Start date: 29 bulan sebelumnya dari display month
+    if (displayMonth === 0) { // Januari
+      startDate = new Date(displayYear - 1, 11, 29); // 29 Desember tahun sebelumnya
+    } else {
+      startDate = new Date(displayYear, displayMonth - 1, 29); // 29 bulan sebelumnya
+    }
+    
+    // End date: 28 bulan display month
+    endDate = new Date(displayYear, displayMonth, 28); // 28 bulan display month
+    
+    return transactions.filter(t => {
+      const transactionDate = new Date(t.createdAt);
+      return transactionDate >= startDate && transactionDate <= endDate;
+    });
+  }, [transactions]);
+
   const summary = useMemo(() => {
-    return transactions.reduce((acc, t) => {
+    return filteredTransactions.reduce((acc, t) => {
       if (t.type === 'income') acc.income += t.amount;
       else acc.expense += t.amount;
       return acc;
     }, { income: 0, expense: 0 });
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const balance = summary.income - summary.expense;
 
   const expenseBreakdown = useMemo(() => {
     const data: Record<string, number> = {};
-    transactions.filter(t => t.type === 'expense').forEach(t => {
+    filteredTransactions.filter(t => t.type === 'expense').forEach(t => {
       data[t.mainCategory] = (data[t.mainCategory] || 0) + t.amount;
     });
     return Object.entries(data).map(([name, value]) => ({ name, value }));
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -42,23 +82,23 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
   const categoryTotals = useMemo(() => {
     const categories = Object.values(MainCategory).filter(c => c !== MainCategory.INCOME);
     return categories.map(cat => {
-      const total = transactions
+      const total = filteredTransactions
         .filter(t => t.type === 'expense' && t.mainCategory === cat)
         .reduce((sum, t) => sum + t.amount, 0);
       return { name: cat, total };
     });
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const monthlyHistory = useMemo(() => {
     const data: Record<string, { month: string, income: number, expense: number }> = {};
-    transactions.forEach(t => {
+    filteredTransactions.forEach(t => {
       const month = t.createdAt.substring(0, 7);
       if (!data[month]) data[month] = { month, income: 0, expense: 0 };
       if (t.type === 'income') data[month].income += t.amount;
       else data[month].expense += t.amount;
     });
     return Object.values(data).sort((a, b) => a.month.localeCompare(b.month));
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -68,10 +108,60 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
     }).format(val);
   };
 
-  const recentTransactions = transactions.slice(0, 3);
+  const recentTransactions = filteredTransactions.slice(0, 3);
+
+  // Format periode untuk ditampilkan
+  const getPeriodDisplay = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const currentDay = now.getDate();
+    
+    let startDate, endDate;
+    let displayYear = currentYear;
+    let displayMonth = currentMonth;
+    
+    // Jika tanggal sudah melewati 28, pindah ke bulan berikutnya
+    if (currentDay > 28) {
+      if (currentMonth === 11) { // Desember, pindah ke Januari tahun berikutnya
+        displayYear = currentYear + 1;
+        displayMonth = 0;
+      } else {
+        displayMonth = currentMonth + 1;
+      }
+    }
+    
+    // Start date: 29 bulan sebelumnya dari display month
+    if (displayMonth === 0) { // Januari
+      startDate = new Date(displayYear - 1, 11, 29);
+    } else {
+      startDate = new Date(displayYear, displayMonth - 1, 29);
+    }
+    
+    // End date: 28 bulan display month
+    endDate = new Date(displayYear, displayMonth, 28);
+    
+    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+    return `${startDate.toLocaleDateString('id-ID', options)} - ${endDate.toLocaleDateString('id-ID', options)}`;
+  };
 
   return (
     <div className="space-y-6 sm:space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
+      {/* Period Indicator */}
+      <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="p-2 bg-indigo-500 rounded-full">
+            <TrendingUp size={14} className="text-white" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Periode Aktif</p>
+            <p className="text-sm font-black text-indigo-900">{getPeriodDisplay()}</p>
+          </div>
+        </div>
+        <div className="text-xs font-medium text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full">
+          {filteredTransactions.length} Transaksi
+        </div>
+      </div>
       {/* Premium Balance Card */}
       <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-indigo-950 p-6 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-indigo-950/40 text-white">
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl"></div>

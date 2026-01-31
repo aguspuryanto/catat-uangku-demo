@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Transaction } from '../types';
-import { Trash2, ShoppingBag, Landmark, Heart, TrendingUp as Profit, AlertCircle, HelpCircle, FileDown, ChevronRight, Calendar, Plus } from 'lucide-react';
+import { Trash2, ShoppingBag, Landmark, Heart, TrendingUp as Profit, AlertCircle, HelpCircle, FileDown, ChevronRight, Calendar, Plus, ChevronDown } from 'lucide-react';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -10,6 +10,82 @@ interface TransactionListProps {
 }
 
 const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelete, isConnected, onAddTransaction }) => {
+  const [selectedPeriodIndex, setSelectedPeriodIndex] = useState(0); // 0 = periode aktif, 1 = periode sebelumnya, dst
+  
+  // Helper function untuk mendapatkan periode berdasarkan index
+  const getPeriodDates = (periodIndex: number) => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const currentDay = now.getDate();
+    
+    let startDate, endDate;
+    let displayYear = currentYear;
+    let displayMonth = currentMonth;
+    
+    // Tentukan bulan display berdasarkan periode index
+    if (currentDay > 28) {
+      if (currentMonth === 11) {
+        displayYear = currentYear + 1;
+        displayMonth = 0;
+      } else {
+        displayMonth = currentMonth + 1;
+      }
+    }
+    
+    // Mundur sebanyak periodIndex bulan
+    for (let i = 0; i < periodIndex; i++) {
+      if (displayMonth === 0) {
+        displayYear = displayYear - 1;
+        displayMonth = 11;
+      } else {
+        displayMonth = displayMonth - 1;
+      }
+    }
+    
+    // Start date: 29 bulan sebelumnya dari display month
+    if (displayMonth === 0) {
+      startDate = new Date(displayYear - 1, 11, 29);
+    } else {
+      startDate = new Date(displayYear, displayMonth - 1, 29);
+    }
+    
+    // End date: 28 bulan display month
+    endDate = new Date(displayYear, displayMonth, 28);
+    
+    return { startDate, endDate, displayYear, displayMonth };
+  };
+  
+  // Generate options untuk dropdown (1 tahun ke belakang = 12 periode)
+  const getPeriodOptions = () => {
+    const options = [];
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    
+    for (let i = 0; i < 12; i++) {
+      const { displayYear, displayMonth } = getPeriodDates(i);
+      const label = i === 0 ? 'Periode Aktif' : `${monthNames[displayMonth]} ${displayYear}`;
+      options.push({ value: i, label });
+    }
+    
+    return options;
+  };
+  
+  // Filter transaksi berdasarkan periode yang dipilih
+  const filteredTransactions = useMemo(() => {
+    const { startDate, endDate } = getPeriodDates(selectedPeriodIndex);
+    
+    return transactions.filter(t => {
+      const transactionDate = new Date(t.createdAt);
+      return transactionDate >= startDate && transactionDate <= endDate;
+    });
+  }, [transactions, selectedPeriodIndex]);
+  
+  // Format periode untuk ditampilkan
+  const getPeriodDisplay = (periodIndex: number) => {
+    const { startDate, endDate } = getPeriodDates(periodIndex);
+    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+    return `${startDate.toLocaleDateString('id-ID', options)} - ${endDate.toLocaleDateString('id-ID', options)}`;
+  };
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -34,10 +110,10 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
     return type === 'income' ? 'text-emerald-600 bg-emerald-50' : 'text-indigo-600 bg-indigo-50';
   };
 
-  const sortedTransactions = [...transactions].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const sortedTransactions = [...filteredTransactions].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const exportToCSV = () => {
-    if (transactions.length === 0) return;
+    if (filteredTransactions.length === 0) return;
     const headers = ['Tanggal', 'Jenis', 'Kategori Utama', 'Sub Kategori', 'Keterangan', 'Jumlah'];
     const rows = sortedTransactions.map(t => [
       t.createdAt,
@@ -82,28 +158,68 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
       )}
 
       {/* List Header */}
-      <div className="flex flex-row justify-between items-end px-2">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 px-2">
         <div>
           <h3 className="text-xl font-black text-slate-800 tracking-tight">Riwayat</h3>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{transactions.length} Records</p>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{filteredTransactions.length} Records</p>
         </div>
-        <div className="flex bg-indigo-50 rounded-2xl overflow-hidden">
-          <button
-            onClick={onAddTransaction}
-            className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-100 rounded-none text-xs font-black tracking-widest uppercase transition-all"
-          >
-            <Plus size={14} strokeWidth={3} />
-            <span>Tambah</span>
-          </button>
-          <div className="w-px bg-indigo-200 my-2"></div>
-          <button
-            onClick={exportToCSV}
-            disabled={transactions.length === 0}
-            className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-100 rounded-none text-xs font-black tracking-widest uppercase transition-all disabled:opacity-30 disabled:grayscale"
-          >
-            <FileDown size={14} strokeWidth={3} />
-            <span>Export</span>
-          </button>
+        
+        {/* Period Selector */}
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <select
+              value={selectedPeriodIndex}
+              onChange={(e) => setSelectedPeriodIndex(Number(e.target.value))}
+              className="appearance-none bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-2 pr-10 text-sm font-black text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer min-w-[180px]"
+              size="1"
+            >
+              {getPeriodOptions().map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-indigo-600 pointer-events-none" />
+          </div>
+          
+          <div className="flex bg-indigo-50 rounded-2xl overflow-hidden">
+            <button
+              onClick={onAddTransaction}
+              className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-100 rounded-none text-xs font-black tracking-widest uppercase transition-all"
+            >
+              <Plus size={14} strokeWidth={3} />
+              <span>Tambah</span>
+            </button>
+            <div className="w-px bg-indigo-200 my-2"></div>
+            <button
+              onClick={exportToCSV}
+              disabled={filteredTransactions.length === 0}
+              className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-100 rounded-none text-xs font-black tracking-widest uppercase transition-all disabled:opacity-30 disabled:grayscale"
+            >
+              <FileDown size={14} strokeWidth={3} />
+              <span>Export</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Period Info */}
+      <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="p-2 bg-indigo-500 rounded-full">
+            <Calendar size={14} className="text-white" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
+              {selectedPeriodIndex === 0 ? 'Periode Aktif' : getPeriodOptions()[selectedPeriodIndex].label}
+            </p>
+            <p className="text-sm font-black text-indigo-900">
+              {getPeriodDisplay(selectedPeriodIndex)}
+            </p>
+          </div>
+        </div>
+        <div className="text-xs font-medium text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full">
+          {filteredTransactions.length} Transaksi
         </div>
       </div>
 

@@ -30,3 +30,23 @@ export interface User {
   password: string;
   isAuthenticated: boolean;
 }
+
+export interface Angsuran {
+  id: string;
+  bulan: number;
+  jumlah: number;
+  bunga: number;
+  pokok: number;
+  sisaPinjaman: number;
+  jatuhTempo: string;
+  status: 'terbayar' | 'belum_terbayar';
+}
+
+export interface Pinjaman {
+  id: string;
+  jumlahPinjaman: number;
+  bungaTahunan: number;
+  tenorBulan: number;
+  tanggalPinjaman: string;
+  angsuran: Angsuran[];
+}

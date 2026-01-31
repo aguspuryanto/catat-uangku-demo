@@ -1,12 +1,12 @@
 
 import React from 'react';
-import { LayoutDashboard, ReceiptText, LogOut, Wallet } from 'lucide-react';
+import { LayoutDashboard, ReceiptText, LogOut, Wallet, Calculator } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
   onLogout: () => void;
-  activeTab: 'dashboard' | 'transactions';
-  setActiveTab: (tab: 'dashboard' | 'transactions') => void;
+  activeTab: 'dashboard' | 'transactions' | 'pinjaman';
+  setActiveTab: (tab: 'dashboard' | 'transactions' | 'pinjaman') => void;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, onLogout, activeTab, setActiveTab }) => {
@@ -35,6 +35,14 @@ const Layout: React.FC<LayoutProps> = ({ children, onLogout, activeTab, setActiv
           >
             <ReceiptText size={20} />
             Transaksi
+          </button>
+          {/* Fitur Pinjaman */}
+          <button 
+            onClick={() => setActiveTab('pinjaman')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'pinjaman' ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            <Calculator size={20} />
+            Pinjaman
           </button>
         </nav>
 
@@ -77,6 +85,13 @@ const Layout: React.FC<LayoutProps> = ({ children, onLogout, activeTab, setActiv
         >
           <ReceiptText size={24} strokeWidth={activeTab === 'transactions' ? 2.5 : 2} />
           <span className="text-[10px] font-bold uppercase tracking-wider">Transaksi</span>
+        </button>
+        <button 
+          onClick={() => setActiveTab('pinjaman')}
+          className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'pinjaman' ? 'text-indigo-600 scale-110' : 'text-slate-400'}`}
+        >
+          <Calculator size={24} strokeWidth={activeTab === 'pinjaman' ? 2.5 : 2} />
+          <span className="text-[10px] font-bold uppercase tracking-wider">Pinjaman</span>
         </button>
       </nav>
 
