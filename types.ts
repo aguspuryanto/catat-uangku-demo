@@ -11,7 +11,7 @@ export enum MainCategory {
 }
 
 export type SubCategory =
-  | 'Iuran & Air' | 'Internet' | 'Listrik' | 'Bensin' | 'Pulsa' | 'Makan' | 'Dan lain2'
+  | 'Iuran & Air' | 'Internet' | 'Listrik' | 'Bensin' | 'Pulsa' | 'Makan' | 'Belanja Online' | 'Dan lain2'
   | 'Saham' | 'Reksadana' | 'Kripto' | 'Deposito'
   | 'None';
 

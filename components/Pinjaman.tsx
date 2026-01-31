@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calculator, Calendar, CheckCircle, XCircle, Plus, Trash2 } from 'lucide-react';
 import type { Angsuran, Pinjaman } from '../types';
+import { updateAngsuranStatus } from '../utils/supabase';
 
 const Pinjaman: React.FC = () => {
   const [pinjaman, setPinjaman] = useState<Pinjaman | null>(null);
@@ -75,17 +76,41 @@ const Pinjaman: React.FC = () => {
     setShowForm(false);
   };
 
-  const toggleStatusAngsuran = (angsuranId: string) => {
+  const toggleStatusAngsuran = async (angsuranId: string) => {
     if (!pinjaman) return;
 
-    setPinjaman({
+    // Optimistic update - update UI immediately
+    const newStatus = pinjaman.angsuran.find(a => a.id === angsuranId)?.status === 'terbayar' 
+      ? 'belum_terbayar' 
+      : 'terbayar';
+
+    const updatedPinjaman = {
       ...pinjaman,
       angsuran: pinjaman.angsuran.map(a =>
         a.id === angsuranId
-          ? { ...a, status: a.status === 'terbayar' ? 'belum_terbayar' : 'terbayar' }
+          ? { ...a, status: newStatus }
           : a
       )
-    });
+    };
+
+    setPinjaman(updatedPinjaman);
+
+    // Update to Supabase
+    try {
+      const { error } = await updateAngsuranStatus(angsuranId, newStatus);
+      
+      if (error) {
+        console.error('Error updating angsuran status:', error);
+        // Revert optimistic update on error
+        setPinjaman(pinjaman);
+        alert('Gagal memperbarui status angsuran. Silakan coba lagi.');
+      }
+    } catch (error) {
+      console.error('Error updating angsuran status:', error);
+      // Revert optimistic update on error
+      setPinjaman(pinjaman);
+      alert('Terjadi kesalahan. Silakan coba lagi.');
+    }
   };
 
   const formatRupiah = (amount: number): string => {
@@ -108,6 +133,9 @@ const Pinjaman: React.FC = () => {
   const totalTerbayar = pinjaman?.angsuran.filter(a => a.status === 'terbayar').reduce((sum, a) => sum + a.jumlah, 0) || 0;
   const totalBelumTerbayar = pinjaman?.angsuran.filter(a => a.status === 'belum_terbayar').reduce((sum, a) => sum + a.jumlah, 0) || 0;
   const persenTerbayar = pinjaman ? (totalTerbayar / (pinjaman.angsuran.reduce((sum, a) => sum + a.jumlah, 0)) * 100) : 0;
+  
+  // Cek apakah ada pinjaman yang belum lunas
+  const adaPinjamanBelumLunas = pinjaman && totalBelumTerbayar > 0;
 
   return (
     <div className="space-y-6">
@@ -123,32 +151,54 @@ const Pinjaman: React.FC = () => {
               <p className="text-slate-500 text-sm">Kelola pinjaman dan angsuran Anda</p>
             </div>
           </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-indigo-700 transition-colors"
-          >
-            <Plus size={20} />
-            Pinjaman Baru
-          </button>
+          {!adaPinjamanBelumLunas && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-indigo-700 transition-colors"
+            >
+              <Plus size={20} />
+              Pinjaman Baru
+            </button>
+          )}
         </div>
 
         {pinjaman && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-slate-50 rounded-xl p-4">
-              <p className="text-slate-500 text-sm mb-1">Total Pinjaman</p>
-              <p className="text-xl font-bold text-slate-900">{formatRupiah(pinjaman.jumlahPinjaman)}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-4 sm:p-5 border border-slate-200/50 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-slate-500/10 rounded-lg flex items-center justify-center">
+                  <Calculator size={16} className="text-slate-600" />
+                </div>
+                <p className="text-slate-500 text-xs sm:text-sm font-medium">Total Pinjaman</p>
+              </div>
+              <p className="text-lg sm:text-xl font-bold text-slate-900">{formatRupiah(pinjaman.jumlahPinjaman)}</p>
             </div>
-            <div className="bg-green-50 rounded-xl p-4">
-              <p className="text-green-600 text-sm mb-1">Terbayar</p>
-              <p className="text-xl font-bold text-green-700">{formatRupiah(totalTerbayar)}</p>
+            <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl p-4 sm:p-5 border border-green-200/50 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
+                  <CheckCircle size={16} className="text-green-600" />
+                </div>
+                <p className="text-green-600 text-xs sm:text-sm font-medium">Terbayar</p>
+              </div>
+              <p className="text-lg sm:text-xl font-bold text-green-700">{formatRupiah(totalTerbayar)}</p>
             </div>
-            <div className="bg-orange-50 rounded-xl p-4">
-              <p className="text-orange-600 text-sm mb-1">Belum Terbayar</p>
-              <p className="text-xl font-bold text-orange-700">{formatRupiah(totalBelumTerbayar)}</p>
+            <div className="bg-gradient-to-br from-orange-50 to-amber-100 rounded-2xl p-4 sm:p-5 border border-orange-200/50 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-orange-500/10 rounded-lg flex items-center justify-center">
+                  <XCircle size={16} className="text-orange-600" />
+                </div>
+                <p className="text-orange-600 text-xs sm:text-sm font-medium">Belum Terbayar</p>
+              </div>
+              <p className="text-lg sm:text-xl font-bold text-orange-700">{formatRupiah(totalBelumTerbayar)}</p>
             </div>
-            <div className="bg-indigo-50 rounded-xl p-4">
-              <p className="text-indigo-600 text-sm mb-1">Progress</p>
-              <p className="text-xl font-bold text-indigo-700">{persenTerbayar.toFixed(1)}%</p>
+            <div className="bg-gradient-to-br from-indigo-50 to-blue-100 rounded-2xl p-4 sm:p-5 border border-indigo-200/50 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center">
+                  <Calendar size={16} className="text-indigo-600" />
+                </div>
+                <p className="text-indigo-600 text-xs sm:text-sm font-medium">Progress</p>
+              </div>
+              <p className="text-lg sm:text-xl font-bold text-indigo-700">{persenTerbayar.toFixed(1)}%</p>
             </div>
           </div>
         )}
@@ -241,72 +291,74 @@ const Pinjaman: React.FC = () => {
           </div>
 
           {/* Tabel Angsuran */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">No</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Jatuh Tempo</th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-slate-700">Pokok</th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-slate-700">Bunga</th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-slate-700">Total</th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-slate-700">Sisa Pinjaman</th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-slate-700">Status</th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-slate-700">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pinjaman.angsuran.map((angsuran) => (
-                  <tr key={angsuran.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                    <td className="py-3 px-4 text-sm text-slate-900">{angsuran.bulan}</td>
-                    <td className="py-3 px-4 text-sm text-slate-900">
-                      <div className="flex items-center gap-2">
-                        <Calendar size={16} className="text-slate-400" />
-                        {formatDate(angsuran.jatuhTempo)}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-sm text-right text-slate-900">{formatRupiah(angsuran.pokok)}</td>
-                    <td className="py-3 px-4 text-sm text-right text-slate-900">{formatRupiah(angsuran.bunga)}</td>
-                    <td className="py-3 px-4 text-sm text-right font-semibold text-slate-900">{formatRupiah(angsuran.jumlah)}</td>
-                    <td className="py-3 px-4 text-sm text-right text-slate-900">{formatRupiah(angsuran.sisaPinjaman)}</td>
-                    <td className="py-3 px-4 text-center">
-                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                        angsuran.status === 'terbayar' 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-orange-100 text-orange-700'
-                      }`}>
-                        {angsuran.status === 'terbayar' ? (
-                          <><CheckCircle size={12} /> Terbayar</>
-                        ) : (
-                          <><XCircle size={12} /> Belum Terbayar</>
-                        )}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <button
-                        onClick={() => toggleStatusAngsuran(angsuran.id)}
-                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                          angsuran.status === 'terbayar'
-                            ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                        }`}
-                      >
-                        {angsuran.status === 'terbayar' ? 'Tandai Belum' : 'Tandai Bayar'}
-                      </button>
-                    </td>
+          <div className="overflow-x-auto -mx-6 px-6">
+            <div className="min-w-full">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="text-left py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700">No</th>
+                    <th className="text-left py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700">Jatuh Tempo</th>
+                    <th className="text-right py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700 hidden sm:table-cell">Pokok</th>
+                    <th className="text-right py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700 hidden sm:table-cell">Bunga</th>
+                    <th className="text-right py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700">Total</th>
+                    <th className="text-right py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700 hidden lg:table-cell">Sisa Pinjaman</th>
+                    <th className="text-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700">Status</th>
+                    <th className="text-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700">Aksi</th>
                   </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="bg-slate-50 font-semibold">
-                  <td colSpan={4} className="py-3 px-4 text-sm text-slate-900">Total</td>
-                  <td className="py-3 px-4 text-sm text-right text-slate-900">
-                    {formatRupiah(pinjaman.angsuran.reduce((sum, a) => sum + a.jumlah, 0))}
-                  </td>
-                  <td colSpan={3}></td>
-                </tr>
-              </tfoot>
-            </table>
+                </thead>
+                <tbody>
+                  {pinjaman.angsuran.map((angsuran) => (
+                    <tr key={angsuran.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-slate-900">{angsuran.bulan}</td>
+                      <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-slate-900">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          <Calendar size={12} className="text-slate-400 hidden sm:block" />
+                          <span className="text-xs sm:text-sm">{formatDate(angsuran.jatuhTempo)}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-right text-slate-900 hidden sm:table-cell">{formatRupiah(angsuran.pokok)}</td>
+                      <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-right text-slate-900 hidden sm:table-cell">{formatRupiah(angsuran.bunga)}</td>
+                      <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-right font-semibold text-slate-900">{formatRupiah(angsuran.jumlah)}</td>
+                      <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-right text-slate-900 hidden lg:table-cell">{formatRupiah(angsuran.sisaPinjaman)}</td>
+                      <td className="py-3 px-2 sm:px-4 text-center">
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                          angsuran.status === 'terbayar' 
+                            ? 'bg-green-100 text-green-700' 
+                            : 'bg-orange-100 text-orange-700'
+                        }`}>
+                          {angsuran.status === 'terbayar' ? (
+                            <><CheckCircle size={10} /> <span>Terbayar</span></>
+                          ) : (
+                            <><XCircle size={10} /> <span>Belum</span></>
+                          )}
+                        </span>
+                      </td>
+                      <td className="py-3 px-2 sm:px-4 text-center">
+                        <button
+                          onClick={() => toggleStatusAngsuran(angsuran.id)}
+                          className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                            angsuran.status === 'terbayar'
+                              ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                        >
+                          {angsuran.status === 'terbayar' ? 'Batal' : 'Bayar'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-slate-50 font-semibold">
+                    <td colSpan={4} className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-slate-900">Total</td>
+                    <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-right text-slate-900">
+                      {formatRupiah(pinjaman.angsuran.reduce((sum, a) => sum + a.jumlah, 0))}
+                    </td>
+                    <td colSpan={3}></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
         </div>
       )}
