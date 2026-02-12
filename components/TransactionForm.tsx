@@ -61,9 +61,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd, isOpen, onOpen
           <X size={24} />
         </button>
 
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-900">Catat Transaksi</h2>
-          <p className="text-slate-500 text-sm mt-1">Masukkan rincian pemasukan atau pengeluaran Anda.</p>
+        <div className="mb-10">
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">Catat Transaksi</h2>
+          <p className="text-slate-500 font-medium">Masukkan rincian pemasukan atau pengeluaran Anda.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -71,18 +71,18 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd, isOpen, onOpen
             {/* Type Switcher */}
             <div className="space-y-3">
               <label className="text-sm font-bold text-slate-700 ml-1">Jenis Transaksi</label>
-              <div className="flex p-1.5 bg-slate-100 rounded-2xl gap-1">
+              <div className="flex p-1.5 bg-gradient-to-r from-slate-50 to-slate-100 rounded-2xl gap-1 border border-slate-200">
                 <button
                   type="button"
                   onClick={() => setType('expense')}
-                  className={`flex-1 py-3 rounded-[1.125rem] text-sm font-bold transition-all ${type === 'expense' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`flex-1 py-3.5 rounded-[1.125rem] text-sm font-bold transition-all duration-200 ${type === 'expense' ? 'bg-white text-red-600 shadow-md border border-red-100' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`}
                 >
                   Pengeluaran
                 </button>
                 <button
                   type="button"
                   onClick={() => setType('income')}
-                  className={`flex-1 py-3 rounded-[1.125rem] text-sm font-bold transition-all ${type === 'income' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`flex-1 py-3.5 rounded-[1.125rem] text-sm font-bold transition-all duration-200 ${type === 'income' ? 'bg-white text-emerald-600 shadow-md border border-emerald-100' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`}
                 >
                   Pemasukan
                 </button>
@@ -93,12 +93,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd, isOpen, onOpen
             <div className="space-y-3">
               <label className="text-sm font-bold text-slate-700 ml-1">Jumlah Nominal (Rp)</label>
               <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-lg">Rp</span>
                 <input
                   type="number"
                   required
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full pl-6 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-900 font-semibold focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all text-lg placeholder:text-slate-300"
+                  className="w-full pl-12 pr-6 py-4.5 rounded-2xl border-2 border-slate-200 bg-slate-50/50 text-slate-900 font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 focus:bg-white transition-all text-xl placeholder:text-slate-300"
                   placeholder="0"
                 />
               </div>
@@ -168,12 +169,15 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd, isOpen, onOpen
             </div>
           </div>
 
-          <div className="pt-6">
+          <div className="pt-8">
             <button
               type="submit"
-              className="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-bold text-lg hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-[0.98]"
+              className="w-full bg-gradient-to-r from-slate-900 to-slate-800 text-white py-5 rounded-[1.5rem] font-bold text-lg hover:from-slate-800 hover:to-slate-700 transition-all duration-200 shadow-xl shadow-slate-200/50 active:scale-[0.98] border border-slate-700"
             >
-              Simpan Transaksi
+              <span className="flex items-center justify-center gap-2">
+                <PlusCircle size={20} />
+                Simpan Transaksi
+              </span>
             </button>
           </div>
         </form>

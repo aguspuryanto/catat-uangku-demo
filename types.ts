@@ -7,12 +7,15 @@ export enum MainCategory {
   DAILY = 'Kebutuhan Harian',
   EMERGENCY = 'Dana Darurat',
   INVESTMENT = 'Investasi',
-  SOCIAL = 'Dana Sosial/Cadangan'
+  SOCIAL = 'Dana Sosial/Cadangan',
+  LOAN = 'Pinjaman'
 }
 
 export type SubCategory =
   | 'Iuran & Air' | 'Internet' | 'Listrik' | 'Bensin' | 'Pulsa' | 'Makan' | 'Belanja Online' | 'Dan lain2'
   | 'Saham' | 'Reksadana' | 'Kripto' | 'Deposito'
+  | 'Pinjaman Online' | 'Pinjaman Pribadi' | 'Pinjaman Bank' | 'Cicilan Kartu Kredit'
+  | 'Pembayaran Hutang' | 'Tabungan'
   | 'None';
 
 export interface Transaction {

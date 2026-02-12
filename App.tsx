@@ -94,18 +94,13 @@ const App: React.FC = () => {
       <div className="max-w-6xl mx-auto pb-10">
         {activeTab === 'dashboard' && (
           <>
-            <header className="mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-6 px-2">
+            <header className="mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-6 px-2">
               <div>
-                <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-none mb-2">
+                <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-none mb-3">
                   Halo, {user.email.split('@')[0]} 👋
                 </h1>
-                <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px]">Your Financial Ecosystem</p>
+                <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[11px]">Your Financial Ecosystem</p>
               </div>
-
-              {/* Desktop Add Button */}
-              {/* <div className="hidden sm:block">
-                <TransactionForm onAdd={addTransaction} />
-              </div> */}
             </header>
             <Dashboard transactions={transactions} />
           </>
@@ -135,7 +130,7 @@ const App: React.FC = () => {
       {activeTab === 'dashboard' && (
         <button
           onClick={() => setActiveTab('transactions')}
-          className="md:hidden fixed bottom-24 right-6 w-16 h-16 bg-indigo-600 text-white rounded-[2rem] shadow-2xl shadow-indigo-500/50 flex items-center justify-center z-50 active:scale-90 transition-transform"
+          className="md:hidden fixed bottom-24 right-6 w-16 h-16 bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-[2rem] shadow-2xl shadow-indigo-500/40 flex items-center justify-center z-50 active:scale-90 transition-all duration-200 hover:from-indigo-700 hover:to-indigo-800"
         >
           <Plus size={32} strokeWidth={3} />
         </button>

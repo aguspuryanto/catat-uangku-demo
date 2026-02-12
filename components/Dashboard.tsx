@@ -1,15 +1,18 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Transaction, MainCategory } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
-import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, LayoutGrid, Home, ShoppingBag, ShieldAlert, BadgeDollarSign, Heart, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, LayoutGrid, Home, ShoppingBag, ShieldAlert, BadgeDollarSign, Heart, ArrowUpRight, ArrowDownLeft, CreditCard } from 'lucide-react';
 import { COLORS } from '../constants';
+import CategoryTransactions from './CategoryTransactions';
 
 interface DashboardProps {
   transactions: Transaction[];
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  
   // console.log(transactions, '_transactions');
   
   // Filter transaksi berdasarkan periode kustom: 29 bulan sebelumnya hingga 28 bulan saat ini
@@ -75,6 +78,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
       case MainCategory.EMERGENCY: return <ShieldAlert size={16} className="text-red-500" />;
       case MainCategory.INVESTMENT: return <BadgeDollarSign size={16} className="text-emerald-500" />;
       case MainCategory.SOCIAL: return <Heart size={16} className="text-pink-500" />;
+      case MainCategory.LOAN: return <CreditCard size={16} className="text-amber-500" />;
       default: return <BadgeDollarSign size={16} className="text-slate-500" />;
     }
   };
@@ -148,52 +152,56 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
   return (
     <div className="space-y-6 sm:space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
       {/* Period Indicator */}
-      <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-indigo-500 rounded-full">
-            <TrendingUp size={14} className="text-white" />
+      <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 border border-indigo-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-indigo-600 rounded-full shadow-lg shadow-indigo-200">
+            <TrendingUp size={16} className="text-white" />
           </div>
           <div>
-            <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Periode Aktif</p>
+            <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider">Periode Aktif</p>
             <p className="text-sm font-black text-indigo-900">{getPeriodDisplay()}</p>
           </div>
         </div>
-        <div className="text-xs font-medium text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full">
+        <div className="text-xs font-bold text-indigo-700 bg-indigo-200/50 px-4 py-2 rounded-full border border-indigo-300">
           {filteredTransactions.length} Transaksi
         </div>
       </div>
       {/* Premium Balance Card */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-indigo-950 p-6 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-indigo-950/40 text-white">
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-6 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-indigo-950/40 text-white border border-indigo-800/20">
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-indigo-500/5 rounded-full blur-3xl"></div>
 
         <div className="relative z-10">
-          <div className="flex justify-between items-center mb-6">
-            <span className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-300/80">Total Net Worth</span>
-            <div className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold border border-white/10">IDR • Indonesia</div>
+          <div className="flex justify-between items-center mb-8">
+            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-indigo-300/90">Total Net Worth</span>
+            <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-bold border border-white/20 flex items-center gap-2">
+              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+              IDR • Indonesia
+            </div>
           </div>
 
           <h2 className="text-4xl sm:text-5xl font-black mb-8 tracking-tight">{formatCurrency(balance)}</h2>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-emerald-500/10 backdrop-blur-sm p-4 rounded-3xl border border-emerald-500/20">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1 bg-emerald-500 rounded-full text-white">
-                  <ArrowUpRight size={10} strokeWidth={3} />
+          <div className="grid grid-cols-2 gap-6">
+            <div className="bg-emerald-500/10 backdrop-blur-sm p-5 rounded-3xl border border-emerald-500/30 hover:bg-emerald-500/15 transition-all duration-300">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-emerald-500 rounded-full text-white shadow-lg shadow-emerald-500/30">
+                  <ArrowUpRight size={12} strokeWidth={3} />
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-emerald-400">Pemasukan</span>
+                <span className="text-[9px] font-black uppercase tracking-wider text-emerald-300">Pemasukan</span>
               </div>
-              <p className="font-bold text-lg">{formatCurrency(summary.income)}</p>
+              <p className="font-bold text-xl text-emerald-100">{formatCurrency(summary.income)}</p>
             </div>
 
-            <div className="bg-red-500/10 backdrop-blur-sm p-4 rounded-3xl border border-red-500/20">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1 bg-red-500 rounded-full text-white">
-                  <ArrowDownLeft size={10} strokeWidth={3} />
+            <div className="bg-red-500/10 backdrop-blur-sm p-5 rounded-3xl border border-red-500/30 hover:bg-red-500/15 transition-all duration-300">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-red-500 rounded-full text-white shadow-lg shadow-red-500/30">
+                  <ArrowDownLeft size={12} strokeWidth={3} />
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-red-400">Pengeluaran</span>
+                <span className="text-[9px] font-black uppercase tracking-wider text-red-300">Pengeluaran</span>
               </div>
-              <p className="font-bold text-lg">{formatCurrency(summary.expense)}</p>
+              <p className="font-bold text-xl text-red-100">{formatCurrency(summary.expense)}</p>
             </div>
           </div>
         </div>
@@ -210,7 +218,11 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {categoryTotals.map((cat) => (
-            <div key={cat.name} className="group bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-300">
+            <div 
+              key={cat.name} 
+              className="group bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-300 cursor-pointer"
+              onClick={() => setSelectedCategory(cat.name)}
+            >
               <div className="flex items-center justify-between mb-3">
                 <div className="p-2 bg-slate-50 rounded-xl group-hover:bg-indigo-50 transition-colors">
                   {getCategoryIcon(cat.name)}
@@ -311,6 +323,16 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
           </div>
         </div>
       </div>
+
+      {/* Category Transactions Modal */}
+      {selectedCategory && (
+        <CategoryTransactions
+          transactions={filteredTransactions}
+          categoryName={selectedCategory}
+          onClose={() => setSelectedCategory(null)}
+          showAsModal={true}
+        />
+      )}
     </div>
   );
 };

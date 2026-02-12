@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Transaction } from '../types';
-import { Trash2, ShoppingBag, Landmark, Heart, TrendingUp as Profit, AlertCircle, HelpCircle, FileDown, ChevronRight, Calendar, Plus, ChevronDown } from 'lucide-react';
+import { Trash2, ShoppingBag, Landmark, Heart, TrendingUp as Profit, AlertCircle, HelpCircle, FileDown, ChevronRight, Calendar, Plus, ChevronDown, CreditCard } from 'lucide-react';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -102,6 +102,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
       case 'Pemasukan': return <Profit size={20} />;
       case 'Dana Sosial/Cadangan': return <Heart size={20} />;
       case 'Dana Darurat': return <AlertCircle size={20} />;
+      case 'Pinjaman': return <CreditCard size={20} />;
       default: return <HelpCircle size={20} />;
     }
   };

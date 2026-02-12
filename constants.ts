@@ -2,12 +2,13 @@
 import { MainCategory, SubCategory } from './types';
 
 export const CATEGORY_MAP: Record<MainCategory, SubCategory[]> = {
-  [MainCategory.INCOME]: ['None'],
+  [MainCategory.INCOME]: ['Pembayaran Hutang', 'Tabungan', 'Dan lain2'],
   [MainCategory.MORTGAGE]: ['None'],
   [MainCategory.DAILY]: ['Iuran & Air', 'Internet', 'Listrik', 'Bensin', 'Pulsa', 'Makan', 'Belanja Online', 'Dan lain2'],
   [MainCategory.EMERGENCY]: ['None'],
   [MainCategory.INVESTMENT]: ['Saham', 'Reksadana', 'Kripto', 'Deposito'],
-  [MainCategory.SOCIAL]: ['None']
+  [MainCategory.SOCIAL]: ['None'],
+  [MainCategory.LOAN]: ['Pinjaman Online', 'Pinjaman Pribadi', 'Pinjaman Bank', 'Cicilan Kartu Kredit']
 };
 
 export const COLORS = {
