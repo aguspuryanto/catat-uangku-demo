@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Calculator, Calendar, CheckCircle, XCircle, Plus, Trash2 } from 'lucide-react';
 import type { Angsuran, Pinjaman } from '../types';
-import { updateAngsuranStatus, formatRupiahHuman, formatRupiah } from '../utils/supabase';
+import { getPinjaman, updateAngsuranStatus, formatRupiahHuman, formatRupiah } from '../utils/supabase';
+
+// Helper function to generate UUID
+const generateUUID = (): string => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
 const Pinjaman: React.FC = () => {
+  const [pinjamanList, setPinjamanList] = useState<Pinjaman[]>([]);
   const [pinjaman, setPinjaman] = useState<Pinjaman | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState<string | null>(null);
   const [paymentData, setPaymentData] = useState({
@@ -18,15 +29,59 @@ const Pinjaman: React.FC = () => {
   });
 
   useEffect(() => {
-    // Load contoh pinjaman saat component pertama kali dimuat
-    const contohPinjaman = generatePinjaman(
-      10000000,
-      3,
-      10,
-      new Date().toISOString().split('T')[0]
-    );
-    setPinjaman(contohPinjaman);
+    loadPinjaman();
   }, []);
+
+  const loadPinjaman = async () => {
+    try {
+      setLoading(true);
+      console.log('Loading pinjaman data...');
+      const { data, error } = await getPinjaman();
+      
+      if (error) {
+        console.error('Error loading pinjaman:', error);
+        // Fallback to mock data if database not available
+        // console.log('Using fallback mock data due to error');
+        // const contohPinjaman = generatePinjaman(
+        //   10000000,
+        //   3,
+        //   10,
+        //   new Date().toISOString().split('T')[0]
+        // );
+        // setPinjaman(contohPinjaman);
+      } else if (!data || data.length === 0) {
+        console.log('No pinjaman data found, using mock data');
+        // Fallback to mock data if no pinjaman exists
+        // const contohPinjaman = generatePinjaman(
+        //   10000000,
+        //   3,
+        //   10,
+        //   new Date().toISOString().split('T')[0]
+        // );
+        // setPinjaman(contohPinjaman);
+      } else {
+        console.log('Found pinjaman data:', data.length, 'items');
+        setPinjamanList(data);
+        // Set first pinjaman as active
+        if (data && data.length > 0) {
+          setPinjaman(data[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading pinjaman:', error);
+      // Fallback to mock data
+      console.log('Using fallback mock data due to exception');
+      const contohPinjaman = generatePinjaman(
+        10000000,
+        3,
+        10,
+        new Date().toISOString().split('T')[0]
+      );
+      setPinjaman(contohPinjaman);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const generatePinjaman = (
     jumlah: number,
@@ -49,7 +104,7 @@ const Pinjaman: React.FC = () => {
       jatuhTempo.setMonth(jatuhTempo.getMonth() + i - 1);
 
       angsuranList.push({
-        id: `angsuran-${i}`,
+        id: generateUUID(), // Use valid UUID instead of "angsuran-${i}"
         bulan: i,
         jumlah: totalAngsuran,
         bunga: bungaPerBulan,
@@ -61,7 +116,7 @@ const Pinjaman: React.FC = () => {
     }
 
     return {
-      id: `pinjaman-${Date.now()}`,
+      id: generateUUID(), // Use valid UUID instead of "pinjaman-${Date.now()}"
       jumlahPinjaman: jumlah,
       bungaTahunan: bungaTahunan,
       tenorBulan: tenor,
@@ -92,6 +147,14 @@ const Pinjaman: React.FC = () => {
   const handleConfirmPayment = async () => {
     if (!showPaymentModal || !pinjaman) return;
 
+    // Find the angsuran to update
+    const angsuran = pinjaman.angsuran.find(a => a.id === showPaymentModal);
+    if (!angsuran) {
+      console.error('Angsuran not found:', showPaymentModal);
+      alert('Data angsuran tidak ditemukan. Silakan coba lagi.');
+      return;
+    }
+
     // Optimistic update - update UI immediately
     const updatedPinjaman = {
       ...pinjaman,
@@ -107,24 +170,37 @@ const Pinjaman: React.FC = () => {
 
     // Update to Supabase
     try {
-      const { error } = await updateAngsuranStatus(showPaymentModal, 'terbayar');
+      console.log('Updating angsuran status:', {
+        id: showPaymentModal,
+        status: 'terbayar',
+        paymentDate: paymentData.tanggalBayar,
+        buktiBayar: paymentData.buktiBayar?.name
+      });
+
+      const { error } = await updateAngsuranStatus(showPaymentModal, 'terbayar', {
+        tanggalBayar: paymentData.tanggalBayar,
+        buktiBayar: paymentData.buktiBayar?.name || null
+      });
       
       if (error) {
         console.error('Error updating angsuran status:', error);
         // Revert optimistic update on error
         setPinjaman(pinjaman);
-        alert('Gagal memperbarui status angsuran. Silakan coba lagi.');
+        alert(`Gagal memperbarui status angsuran: ${error.message || 'Silakan coba lagi.'}`);
       } else {
-        // Success - you could also save payment proof here if needed
-        console.log('Payment confirmed for:', showPaymentModal);
+        // Success
+        console.log('Payment confirmed successfully for:', showPaymentModal);
         console.log('Payment date:', paymentData.tanggalBayar);
         console.log('Payment proof:', paymentData.buktiBayar);
+        
+        // Show success message
+        alert('Pembayaran berhasil dikonfirmasi!');
       }
     } catch (error) {
       console.error('Error updating angsuran status:', error);
       // Revert optimistic update on error
       setPinjaman(pinjaman);
-      alert('Terjadi kesalahan. Silakan coba lagi.');
+      alert(`Terjadi kesalahan: ${error instanceof Error ? error.message : 'Silakan coba lagi.'}`);
     }
   };
 
@@ -141,6 +217,13 @@ const Pinjaman: React.FC = () => {
 
     // If trying to cancel payment, do it directly
     const newStatus = 'belum_terbayar';
+    const angsuran = pinjaman.angsuran.find(a => a.id === angsuranId);
+    
+    if (!angsuran) {
+      console.error('Angsuran not found:', angsuranId);
+      alert('Data angsuran tidak ditemukan. Silakan coba lagi.');
+      return;
+    }
 
     const updatedPinjaman = {
       ...pinjaman,
@@ -155,19 +238,27 @@ const Pinjaman: React.FC = () => {
 
     // Update to Supabase
     try {
+      console.log('Cancelling payment for angsuran:', {
+        id: angsuranId,
+        newStatus: newStatus
+      });
+
       const { error } = await updateAngsuranStatus(angsuranId, newStatus);
       
       if (error) {
         console.error('Error updating angsuran status:', error);
         // Revert optimistic update on error
         setPinjaman(pinjaman);
-        alert('Gagal memperbarui status angsuran. Silakan coba lagi.');
+        alert(`Gagal membatalkan pembayaran: ${error.message || 'Silakan coba lagi.'}`);
+      } else {
+        console.log('Payment cancelled successfully for:', angsuranId);
+        alert('Pembayaran berhasil dibatalkan.');
       }
     } catch (error) {
       console.error('Error updating angsuran status:', error);
       // Revert optimistic update on error
       setPinjaman(pinjaman);
-      alert('Terjadi kesalahan. Silakan coba lagi.');
+      alert(`Terjadi kesalahan: ${error instanceof Error ? error.message : 'Silakan coba lagi.'}`);
     }
   };
 
@@ -189,22 +280,35 @@ const Pinjaman: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-        <div>
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-3">Pinjaman</h1>
-          <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[11px]">Loan Management System</p>
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p className="text-slate-600 font-medium">Memuat data pinjaman...</p>
+          </div>
         </div>
-        {!adaPinjamanBelumLunas && (
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200 shadow-lg shadow-indigo-200/50"
-          >
-            <Plus size={20} />
-            <span className="font-bold">Pinjaman Baru</span>
-          </button>
-        )}
-      </div>
+      )}
+
+      {/* Content - Only show when not loading */}
+      {!loading && (
+        <>
+          {/* Header Section */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-3">Pinjaman</h1>
+              <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[11px]">Loan Management System</p>
+            </div>
+            {!adaPinjamanBelumLunas && (
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200 shadow-lg shadow-indigo-200/50"
+              >
+                <Plus size={20} />
+                <span className="font-bold">Pinjaman Baru</span>
+              </button>
+            )}
+          </div>
 
       {/* Total Pinjaman Card */}
       {pinjaman && (
@@ -237,33 +341,36 @@ const Pinjaman: React.FC = () => {
 
       {/* Progress Cards */}
       {pinjaman && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-3xl p-6 border border-emerald-200/50 shadow-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-emerald-500 rounded-2xl text-white shadow-lg shadow-emerald-200">
-                <CheckCircle size={20} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Terbayar & Belum Terbayar Cards */}
+          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-3xl p-6 border border-emerald-200/50 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-emerald-500 rounded-2xl text-white shadow-lg shadow-emerald-200">
+                  <CheckCircle size={20} />
+                </div>
+                <div>
+                  <p className="text-emerald-600 text-[10px] font-bold uppercase tracking-wider">Terbayar</p>
+                  <p className="text-2xl font-black text-emerald-700">{persenTerbayar.toFixed(1)}%</p>
+                </div>
               </div>
-              <div>
-                <p className="text-emerald-600 text-[10px] font-bold uppercase tracking-wider">Terbayar</p>
-                <p className="text-2xl font-black text-emerald-700">{persenTerbayar.toFixed(1)}%</p>
-              </div>
+              <p className="text-emerald-600 font-bold text-lg">{formatRupiahHuman(totalTerbayar)}</p>
             </div>
-            <p className="text-emerald-600 font-bold text-lg">{formatRupiahHuman(totalTerbayar)}</p>
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-3xl p-6 border border-amber-200/50 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-amber-500 rounded-2xl text-white shadow-lg shadow-amber-200">
+                  <XCircle size={20} />
+                </div>
+                <div>
+                  <p className="text-amber-600 text-[10px] font-bold uppercase tracking-wider">Belum Terbayar</p>
+                  <p className="text-2xl font-black text-amber-700">{(100 - persenTerbayar).toFixed(1)}%</p>
+                </div>
+              </div>
+              <p className="text-amber-600 font-bold text-lg">{formatRupiahHuman(totalBelumTerbayar)}</p>
+            </div>
           </div>
 
-          <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-3xl p-6 border border-amber-200/50 shadow-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-amber-500 rounded-2xl text-white shadow-lg shadow-amber-200">
-                <XCircle size={20} />
-              </div>
-              <div>
-                <p className="text-amber-600 text-[10px] font-bold uppercase tracking-wider">Belum Terbayar</p>
-                <p className="text-2xl font-black text-amber-700">{(100 - persenTerbayar).toFixed(1)}%</p>
-              </div>
-            </div>
-            <p className="text-amber-600 font-bold text-lg">{formatRupiahHuman(totalBelumTerbayar)}</p>
-          </div>
-
+          {/* Progress Card */}
           <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-3xl p-6 border border-indigo-200/50 shadow-sm">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-3 bg-indigo-500 rounded-2xl text-white shadow-lg shadow-indigo-200">
@@ -274,12 +381,7 @@ const Pinjaman: React.FC = () => {
                 <p className="text-2xl font-black text-indigo-700">{persenTerbayar.toFixed(1)}%</p>
               </div>
             </div>
-            <div className="w-full bg-indigo-200 rounded-full h-2">
-              <div 
-                className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-2 rounded-full transition-all duration-500"
-                style={{ width: `${persenTerbayar}%` }}
-              />
-            </div>
+            <p className="text-indigo-600 font-bold text-lg">{formatRupiahHuman(totalTerbayar)}</p>
           </div>
         </div>
       )}
@@ -370,7 +472,6 @@ const Pinjaman: React.FC = () => {
                     <th className="text-right py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Total</th>
                     <th className="text-right py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider hidden lg:table-cell">Sisa Pinjaman</th>
                     <th className="text-center py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Status</th>
-                    <th className="text-center py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -390,40 +491,38 @@ const Pinjaman: React.FC = () => {
                       <td className="py-4 px-4 text-sm text-right font-bold text-slate-900">{formatRupiah(angsuran.jumlah)}</td>
                       <td className="py-4 px-4 text-sm text-right text-slate-900 hidden lg:table-cell font-medium">{formatRupiah(angsuran.sisaPinjaman)}</td>
                       <td className="py-4 px-4 text-center">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${
-                          angsuran.status === 'terbayar' 
-                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
-                            : 'bg-amber-100 text-amber-700 border border-amber-200'
-                        }`}>
-                          {angsuran.status === 'terbayar' ? (
-                            <><CheckCircle size={12} /> <span>Terbayar</span></>
-                          ) : (
-                            <><XCircle size={12} /> <span>Belum</span></>
+                        <div className="flex flex-col items-center gap-2">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${
+                            angsuran.status === 'terbayar' 
+                              ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                              : 'bg-amber-100 text-amber-700 border border-amber-200'
+                          }`}>
+                            {angsuran.status === 'terbayar' ? (
+                              <><CheckCircle size={12} /> <span>Lunas</span></>
+                            ) : (
+                              <><XCircle size={12} /> <span>Belum</span></>
+                            )}
+                          </span>
+                          {angsuran.status === 'belum_terbayar' && (
+                            <button
+                              onClick={() => toggleStatusAngsuran(angsuran.id)}
+                              className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200"
+                            >
+                              Bayar
+                            </button>
                           )}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <button
-                          onClick={() => toggleStatusAngsuran(angsuran.id)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 ${
-                            angsuran.status === 'terbayar'
-                              ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200'
-                              : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200'
-                          }`}
-                        >
-                          {angsuran.status === 'terbayar' ? 'Batalkan' : 'Bayar'}
-                        </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="bg-slate-100 border-t-2 border-slate-200">
-                    <td colSpan={4} className="py-4 px-4 text-sm font-bold text-slate-900 uppercase tracking-wider">Total</td>
+                    <td colSpan={5} className="py-4 px-4 text-sm font-bold text-slate-900 uppercase tracking-wider">Total</td>
                     <td className="py-4 px-4 text-sm font-bold text-slate-900">
                       {formatRupiah(pinjaman.angsuran.reduce((sum, a) => sum + a.jumlah, 0))}
                     </td>
-                    <td colSpan={3}></td>
+                    <td colSpan={2}></td>
                   </tr>
                 </tfoot>
               </table>
@@ -528,6 +627,8 @@ const Pinjaman: React.FC = () => {
             })()}
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

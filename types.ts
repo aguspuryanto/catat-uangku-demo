@@ -43,6 +43,8 @@ export interface Angsuran {
   sisaPinjaman: number;
   jatuhTempo: string;
   status: 'terbayar' | 'belum_terbayar';
+  tanggalBayar?: string;
+  buktiBayar?: string | null;
 }
 
 export interface Pinjaman {

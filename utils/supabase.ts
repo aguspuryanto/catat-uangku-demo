@@ -88,6 +88,8 @@ export const removeTransaction = async (id: string) => {
 
 // PINJAMAN FUNCTIONS
 export const getPinjaman = async (): Promise<{ data: Pinjaman[], error: any }> => {
+    console.log('Fetching pinjaman from Supabase...');
+    
     const { data: pinjamanData, error: pinjamanError } = await supabase
         .from('pinjaman')
         .select('*')
@@ -98,9 +100,17 @@ export const getPinjaman = async (): Promise<{ data: Pinjaman[], error: any }> =
         return { data: [], error: pinjamanError };
     }
 
+    // Check if table exists or has data
+    if (!pinjamanData) {
+        console.log('Pinjaman data is null - table might not exist');
+        return { data: [], error: null };
+    }
+
     // Get angsuran for each pinjaman
     const pinjamanWithAngsuran = await Promise.all(
         pinjamanData.map(async (pinjaman: any) => {
+            // console.log('Fetching angsuran for pinjaman ID:', pinjaman.id);
+            
             const { data: angsuranData, error: angsuranError } = await supabase
                 .from('angsuran')
                 .select('*')
@@ -115,7 +125,9 @@ export const getPinjaman = async (): Promise<{ data: Pinjaman[], error: any }> =
                 pokok: a.pokok,
                 sisaPinjaman: a.sisa_pinjaman,
                 jatuhTempo: a.jatuh_tempo,
-                status: a.status
+                status: a.status,
+                tanggalBayar: a.tanggal_bayar,
+                buktiBayar: a.bukti_bayar
             })) || [];
 
             return {
@@ -129,6 +141,7 @@ export const getPinjaman = async (): Promise<{ data: Pinjaman[], error: any }> =
         })
     );
 
+    // console.log('Final pinjaman with angsuran:', pinjamanWithAngsuran);
     return { data: pinjamanWithAngsuran, error: null };
 };
 
@@ -174,10 +187,25 @@ export const createPinjaman = async (pinjaman: Pinjaman): Promise<{ data: any, e
     return { data: pinjamanData, error: null };
 };
 
-export const updateAngsuranStatus = async (angsuranId: string, status: 'terbayar' | 'belum_terbayar'): Promise<{ error: any }> => {
+export const updateAngsuranStatus = async (
+    angsuranId: string, 
+    status: 'terbayar' | 'belum_terbayar',
+    paymentData?: {
+        tanggalBayar?: string;
+        buktiBayar?: string | null;
+    }
+): Promise<{ error: any }> => {
+    const updateData: any = { status };
+    
+    // Add payment data if marking as paid
+    if (status === 'terbayar' && paymentData) {
+        updateData.tanggal_bayar = paymentData.tanggalBayar;
+        updateData.bukti_bayar = paymentData.buktiBayar;
+    }
+    
     const { error } = await supabase
         .from('angsuran')
-        .update({ status })
+        .update(updateData)
         .eq('id', angsuranId);
 
     if (error) {
