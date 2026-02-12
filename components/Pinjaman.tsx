@@ -6,6 +6,11 @@ import { updateAngsuranStatus, formatRupiahHuman, formatRupiah } from '../utils/
 const Pinjaman: React.FC = () => {
   const [pinjaman, setPinjaman] = useState<Pinjaman | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState<string | null>(null);
+  const [paymentData, setPaymentData] = useState({
+    tanggalBayar: new Date().toISOString().split('T')[0],
+    buktiBayar: null as File | null
+  });
   const [formData, setFormData] = useState({
     jumlahPinjaman: 10000000,
     bungaTahunan: 3,
@@ -41,7 +46,7 @@ const Pinjaman: React.FC = () => {
 
       const jatuhTempo = new Date(tanggal);
       jatuhTempo.setDate(5); // Set tanggal 5 setiap bulan
-      jatuhTempo.setMonth(jatuhTempo.getMonth() + i);
+      jatuhTempo.setMonth(jatuhTempo.getMonth() + i - 1);
 
       angsuranList.push({
         id: `angsuran-${i}`,
@@ -76,13 +81,66 @@ const Pinjaman: React.FC = () => {
     setShowForm(false);
   };
 
+  const handlePaymentClick = (angsuranId: string) => {
+    setShowPaymentModal(angsuranId);
+    setPaymentData({
+      tanggalBayar: new Date().toISOString().split('T')[0],
+      buktiBayar: null
+    });
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!showPaymentModal || !pinjaman) return;
+
+    // Optimistic update - update UI immediately
+    const updatedPinjaman = {
+      ...pinjaman,
+      angsuran: pinjaman.angsuran.map(a =>
+        a.id === showPaymentModal
+          ? { ...a, status: 'terbayar' as const }
+          : a
+      )
+    };
+
+    setPinjaman(updatedPinjaman);
+    setShowPaymentModal(null);
+
+    // Update to Supabase
+    try {
+      const { error } = await updateAngsuranStatus(showPaymentModal, 'terbayar');
+      
+      if (error) {
+        console.error('Error updating angsuran status:', error);
+        // Revert optimistic update on error
+        setPinjaman(pinjaman);
+        alert('Gagal memperbarui status angsuran. Silakan coba lagi.');
+      } else {
+        // Success - you could also save payment proof here if needed
+        console.log('Payment confirmed for:', showPaymentModal);
+        console.log('Payment date:', paymentData.tanggalBayar);
+        console.log('Payment proof:', paymentData.buktiBayar);
+      }
+    } catch (error) {
+      console.error('Error updating angsuran status:', error);
+      // Revert optimistic update on error
+      setPinjaman(pinjaman);
+      alert('Terjadi kesalahan. Silakan coba lagi.');
+    }
+  };
+
   const toggleStatusAngsuran = async (angsuranId: string) => {
     if (!pinjaman) return;
 
-    // Optimistic update - update UI immediately
-    const newStatus = pinjaman.angsuran.find(a => a.id === angsuranId)?.status === 'terbayar' 
-      ? 'belum_terbayar' 
-      : 'terbayar';
+    const currentStatus = pinjaman.angsuran.find(a => a.id === angsuranId)?.status;
+    
+    // If trying to mark as paid, show confirmation modal
+    if (currentStatus === 'belum_terbayar') {
+      handlePaymentClick(angsuranId);
+      return;
+    }
+
+    // If trying to cancel payment, do it directly
+    const newStatus = 'belum_terbayar';
 
     const updatedPinjaman = {
       ...pinjaman,
@@ -130,117 +188,160 @@ const Pinjaman: React.FC = () => {
   const adaPinjamanBelumLunas = pinjaman && totalBelumTerbayar > 0;
 
   return (
-    <div className="space-y-6">
-      {/* Total Pinjaman Card - Pindah ke Atas */}
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-3">Pinjaman</h1>
+          <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[11px]">Loan Management System</p>
+        </div>
+        {!adaPinjamanBelumLunas && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200 shadow-lg shadow-indigo-200/50"
+          >
+            <Plus size={20} />
+            <span className="font-bold">Pinjaman Baru</span>
+          </button>
+        )}
+      </div>
+
+      {/* Total Pinjaman Card */}
       {pinjaman && (
-        <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-3xl p-6 sm:p-8 shadow-xl text-white">
+        <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-800 rounded-3xl p-8 shadow-2xl shadow-indigo-900/20 text-white border border-indigo-700/30">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-indigo-100 text-sm sm:text-base font-medium mb-2">Total Pinjaman</p>
-              <p className="text-3xl sm:text-4xl font-bold">{formatRupiahHuman(pinjaman.jumlahPinjaman)}</p>
-              <p className="text-indigo-200 text-xs sm:text-sm mt-2">
-                Bunga: {pinjaman.bungaTahunan}%/tahun • Tenor: {pinjaman.tenorBulan} bulan
-              </p>
+            <div className="flex-1">
+              <p className="text-indigo-100 text-sm font-bold uppercase tracking-wider mb-3">Total Pinjaman Aktif</p>
+              <p className="text-4xl sm:text-5xl font-black mb-4">{formatRupiahHuman(pinjaman.jumlahPinjaman)}</p>
+              <div className="flex flex-wrap gap-4 text-indigo-200 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-indigo-300 rounded-full"></div>
+                  <span>Bunga: {pinjaman.bungaTahunan}%/tahun</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-indigo-300 rounded-full"></div>
+                  <span>Tenor: {pinjaman.tenorBulan} bulan</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-indigo-300 rounded-full"></div>
+                  <span>Mulai: {formatDate(pinjaman.tanggalPinjaman)}</span>
+                </div>
+              </div>
             </div>
-            <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
-              <Calculator size={32} className="text-white" />
+            <div className="bg-white/10 p-6 rounded-3xl backdrop-blur-sm border border-white/20">
+              <Calculator size={40} className="text-white" />
             </div>
           </div>
         </div>
       )}
 
-      {/* Header */}
-
-      {pinjaman && showForm && (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-indigo-100 p-3 rounded-xl">
-              <Calculator className="text-indigo-600" size={24} />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900">Pinjaman</h2>
-              <p className="text-slate-500 text-sm">Kelola pinjaman dan angsuran Anda</p>
-            </div>
-          </div>
-          {!adaPinjamanBelumLunas && (
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-indigo-700 transition-colors"
-            >
-              <Plus size={20} />
-              Pinjaman Baru
-            </button>
-          )}
-        </div>
-        
-        <div className="grid grid-cols-1 gap-3 sm:gap-4">
-          <div className="bg-gradient-to-br from-indigo-50 to-blue-100 rounded-2xl p-4 sm:p-5 border border-indigo-200/50 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center">
-                <Calendar size={16} className="text-indigo-600" />
+      {/* Progress Cards */}
+      {pinjaman && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-3xl p-6 border border-emerald-200/50 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-emerald-500 rounded-2xl text-white shadow-lg shadow-emerald-200">
+                <CheckCircle size={20} />
               </div>
-              <p className="text-indigo-600 text-xs sm:text-sm font-medium">Progress Pembayaran</p>
+              <div>
+                <p className="text-emerald-600 text-[10px] font-bold uppercase tracking-wider">Terbayar</p>
+                <p className="text-2xl font-black text-emerald-700">{persenTerbayar.toFixed(1)}%</p>
+              </div>
             </div>
-            <p className="text-lg sm:text-xl font-bold text-indigo-700">{persenTerbayar.toFixed(1)}%</p>
+            <p className="text-emerald-600 font-bold text-lg">{formatRupiahHuman(totalTerbayar)}</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-3xl p-6 border border-amber-200/50 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-amber-500 rounded-2xl text-white shadow-lg shadow-amber-200">
+                <XCircle size={20} />
+              </div>
+              <div>
+                <p className="text-amber-600 text-[10px] font-bold uppercase tracking-wider">Belum Terbayar</p>
+                <p className="text-2xl font-black text-amber-700">{(100 - persenTerbayar).toFixed(1)}%</p>
+              </div>
+            </div>
+            <p className="text-amber-600 font-bold text-lg">{formatRupiahHuman(totalBelumTerbayar)}</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-3xl p-6 border border-indigo-200/50 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-indigo-500 rounded-2xl text-white shadow-lg shadow-indigo-200">
+                <Calendar size={20} />
+              </div>
+              <div>
+                <p className="text-indigo-600 text-[10px] font-bold uppercase tracking-wider">Progress</p>
+                <p className="text-2xl font-black text-indigo-700">{persenTerbayar.toFixed(1)}%</p>
+              </div>
+            </div>
+            <div className="w-full bg-indigo-200 rounded-full h-2">
+              <div 
+                className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-2 rounded-full transition-all duration-500"
+                style={{ width: `${persenTerbayar}%` }}
+              />
+            </div>
           </div>
         </div>
-      </div>
       )}
 
       {/* Form Pinjaman Baru */}
       {showForm && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Buat Pinjaman Baru</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Jumlah Pinjaman
-              </label>
-              <input
-                type="number"
-                value={formData.jumlahPinjaman}
-                onChange={(e) => setFormData({...formData, jumlahPinjaman: Number(e.target.value)})}
-                className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="10000000"
-              />
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-2xl font-bold text-slate-900">Buat Pinjaman Baru</h3>
+            <button
+              onClick={() => setShowForm(false)}
+              className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-xl transition-all"
+            >
+              <XCircle size={24} />
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Jumlah Pinjaman</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">Rp</span>
+                <input
+                  type="number"
+                  value={formData.jumlahPinjaman}
+                  onChange={(e) => setFormData({...formData, jumlahPinjaman: Number(e.target.value)})}
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-200 bg-slate-50/50 text-slate-900 font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 focus:bg-white transition-all text-lg"
+                  placeholder="10.000.000"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Bunga Tahunan (%)
-              </label>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Bunga Tahunan (%)</label>
               <input
                 type="number"
                 step="0.1"
                 value={formData.bungaTahunan}
                 onChange={(e) => setFormData({...formData, bungaTahunan: Number(e.target.value)})}
-                className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-4 rounded-2xl border-2 border-slate-200 bg-slate-50/50 text-slate-900 font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 focus:bg-white transition-all text-lg"
                 placeholder="3"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Tenor (Bulan)
-              </label>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Tenor (Bulan)</label>
               <input
                 type="number"
                 value={formData.tenorBulan}
                 onChange={(e) => setFormData({...formData, tenorBulan: Number(e.target.value)})}
-                className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-4 rounded-2xl border-2 border-slate-200 bg-slate-50/50 text-slate-900 font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 focus:bg-white transition-all text-lg"
                 placeholder="12"
               />
             </div>
           </div>
-          <div className="flex gap-3 mt-4">
+          <div className="flex gap-4 mt-8">
             <button
               onClick={handleCreatePinjaman}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-xl hover:bg-indigo-700 transition-colors"
+              className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-8 py-4 rounded-2xl font-bold hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200 shadow-lg shadow-indigo-200/50"
             >
               Buat Pinjaman
             </button>
             <button
               onClick={() => setShowForm(false)}
-              className="bg-slate-200 text-slate-700 px-6 py-2 rounded-xl hover:bg-slate-300 transition-colors"
+              className="bg-slate-100 text-slate-700 px-8 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-all duration-200"
             >
               Batal
             </button>
@@ -248,94 +349,78 @@ const Pinjaman: React.FC = () => {
         </div>
       )}
 
-      {/* Detail Pinjaman */}
+      {/* Detail Pinjaman & Tabel Angsuran */}
       {pinjaman && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-          {/* <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-slate-900">Detail Pinjaman</h3>
-            <div className="flex items-center gap-4 text-sm text-slate-600">
-              <span>Bunga: {pinjaman.bungaTahunan}%/tahun</span>
-              <span>Tenor: {pinjaman.tenorBulan} bulan</span>
-              <span>Tanggal: {formatDate(pinjaman.tanggalPinjaman)}</span>
-            </div>
-          </div> */}
-
-          {/* Progress Bar */}
-          <div className="mb-6">
-            <div className="flex justify-between text-sm text-slate-600 mb-2">
-              <span>Progress Pembayaran</span>
-              <span>{persenTerbayar.toFixed(1)}%</span>
-            </div>
-            <div className="w-full bg-slate-200 rounded-full h-3">
-              <div 
-                className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${persenTerbayar}%` }}
-              />
-            </div>
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-8">
+          <div className="mb-8">
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">Detail Angsuran</h3>
+            <p className="text-slate-500">Jadual pembayaran dan status angsuran pinjaman</p>
           </div>
 
           {/* Tabel Angsuran */}
-          <div className="overflow-x-auto -mx-6 px-6">
+          <div className="overflow-x-auto -mx-8 px-8">
             <div className="min-w-full">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200">
-                    <th className="text-left py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700">No</th>
-                    <th className="text-left py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700">Jatuh Tempo</th>
-                    <th className="text-right py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700 hidden sm:table-cell">Pokok</th>
-                    <th className="text-right py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700 hidden sm:table-cell">Bunga</th>
-                    <th className="text-right py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700">Total</th>
-                    <th className="text-right py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700 hidden lg:table-cell">Sisa Pinjaman</th>
-                    <th className="text-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700">Status</th>
-                    <th className="text-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700">Aksi</th>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="text-left py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">No</th>
+                    <th className="text-left py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Jatuh Tempo</th>
+                    <th className="text-right py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider hidden sm:table-cell">Pokok</th>
+                    <th className="text-right py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider hidden sm:table-cell">Bunga</th>
+                    <th className="text-right py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Total</th>
+                    <th className="text-right py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider hidden lg:table-cell">Sisa Pinjaman</th>
+                    <th className="text-center py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Status</th>
+                    <th className="text-center py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {pinjaman.angsuran.map((angsuran) => (
-                    <tr key={angsuran.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                      <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-slate-900">{angsuran.bulan}</td>
-                      <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-slate-900">
-                        <div className="flex items-center gap-1 sm:gap-2">
-                          <Calendar size={12} className="text-slate-400 hidden sm:block" />
-                          <span className="text-xs sm:text-sm">{formatDate(angsuran.jatuhTempo)}</span>
+                  {pinjaman.angsuran.map((angsuran, index) => (
+                    <tr key={angsuran.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${
+                      angsuran.status === 'terbayar' ? 'bg-emerald-50/50' : ''
+                    }`}>
+                      <td className="py-4 px-4 text-sm text-slate-900 font-medium">{index + 1}</td>
+                      <td className="py-4 px-4 text-sm text-slate-900">
+                        <div className="flex items-center gap-2">
+                          <Calendar size={14} className="text-slate-400" />
+                          <span className="font-medium">{formatDate(angsuran.jatuhTempo)}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-right text-slate-900 hidden sm:table-cell">{formatRupiah(angsuran.pokok)}</td>
-                      <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-right text-slate-900 hidden sm:table-cell">{formatRupiah(angsuran.bunga)}</td>
-                      <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-right font-semibold text-slate-900">{formatRupiah(angsuran.jumlah)}</td>
-                      <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-right text-slate-900 hidden lg:table-cell">{formatRupiah(angsuran.sisaPinjaman)}</td>
-                      <td className="py-3 px-2 sm:px-4 text-center">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                      <td className="py-4 px-4 text-sm text-right text-slate-900 hidden sm:table-cell font-medium">{formatRupiah(angsuran.pokok)}</td>
+                      <td className="py-4 px-4 text-sm text-right text-slate-900 hidden sm:table-cell font-medium">{formatRupiah(angsuran.bunga)}</td>
+                      <td className="py-4 px-4 text-sm text-right font-bold text-slate-900">{formatRupiah(angsuran.jumlah)}</td>
+                      <td className="py-4 px-4 text-sm text-right text-slate-900 hidden lg:table-cell font-medium">{formatRupiah(angsuran.sisaPinjaman)}</td>
+                      <td className="py-4 px-4 text-center">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${
                           angsuran.status === 'terbayar' 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-orange-100 text-orange-700'
+                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                            : 'bg-amber-100 text-amber-700 border border-amber-200'
                         }`}>
                           {angsuran.status === 'terbayar' ? (
-                            <><CheckCircle size={10} /> <span>Terbayar</span></>
+                            <><CheckCircle size={12} /> <span>Terbayar</span></>
                           ) : (
-                            <><XCircle size={10} /> <span>Belum</span></>
+                            <><XCircle size={12} /> <span>Belum</span></>
                           )}
                         </span>
                       </td>
-                      <td className="py-3 px-2 sm:px-4 text-center">
+                      <td className="py-4 px-4 text-center">
                         <button
                           onClick={() => toggleStatusAngsuran(angsuran.id)}
-                          className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 ${
                             angsuran.status === 'terbayar'
-                              ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                              ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200'
+                              : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200'
                           }`}
                         >
-                          {angsuran.status === 'terbayar' ? 'Batal' : 'Bayar'}
+                          {angsuran.status === 'terbayar' ? 'Batalkan' : 'Bayar'}
                         </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="bg-slate-50 font-semibold">
-                    <td colSpan={4} className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-slate-900">Total</td>
-                    <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-right text-slate-900">
+                  <tr className="bg-slate-100 border-t-2 border-slate-200">
+                    <td colSpan={4} className="py-4 px-4 text-sm font-bold text-slate-900 uppercase tracking-wider">Total</td>
+                    <td className="py-4 px-4 text-sm font-bold text-slate-900">
                       {formatRupiah(pinjaman.angsuran.reduce((sum, a) => sum + a.jumlah, 0))}
                     </td>
                     <td colSpan={3}></td>
@@ -343,6 +428,104 @@ const Pinjaman: React.FC = () => {
                 </tfoot>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Confirmation Modal */}
+      {showPaymentModal && pinjaman && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-slate-900">Konfirmasi Pembayaran</h2>
+              <button 
+                onClick={() => setShowPaymentModal(null)}
+                className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-xl transition-all"
+              >
+                <XCircle size={20} />
+              </button>
+            </div>
+            
+            {(() => {
+              const angsuran = pinjaman.angsuran.find(a => a.id === showPaymentModal);
+              if (!angsuran) return null;
+              
+              return (
+                <div className="space-y-6">
+                  {/* Detail Angsuran */}
+                  <div className="bg-slate-50 rounded-2xl p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-slate-600">Angsuran ke-{angsuran.bulan}</span>
+                      <span className="text-sm font-bold text-slate-900">{formatDate(angsuran.jatuhTempo)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Jumlah</span>
+                      <span className="text-lg font-bold text-slate-900">{formatRupiah(angsuran.jumlah)}</span>
+                    </div>
+                  </div>
+
+                  {/* Form Pembayaran */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">
+                        Tanggal Pembayaran
+                      </label>
+                      <input
+                        type="date"
+                        value={paymentData.tanggalBayar}
+                        onChange={(e) => setPaymentData({...paymentData, tanggalBayar: e.target.value})}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50/50 text-slate-900 font-medium focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">
+                        Bukti Pembayaran (Opsional)
+                      </label>
+                      <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-indigo-400 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) => setPaymentData({...paymentData, buktiBayar: e.target.files?.[0] || null})}
+                          className="hidden"
+                          id="bukti-bayar"
+                        />
+                        <label 
+                          htmlFor="bukti-bayar"
+                          className="cursor-pointer flex flex-col items-center gap-2"
+                        >
+                          <div className="p-3 bg-indigo-100 rounded-xl">
+                            <CheckCircle size={20} className="text-indigo-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-slate-700">
+                              {paymentData.buktiBayar ? paymentData.buktiBayar.name : 'Pilih File Bukti Pembayaran'}
+                            </p>
+                            <p className="text-xs text-slate-500">PNG, JPG, PDF (max. 5MB)</p>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      onClick={() => setShowPaymentModal(null)}
+                      className="flex-1 bg-slate-100 text-slate-700 px-4 py-3 rounded-xl font-bold hover:bg-slate-200 transition-all duration-200"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      onClick={handleConfirmPayment}
+                      className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-3 rounded-xl font-bold hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 shadow-lg shadow-emerald-200/50"
+                    >
+                      Konfirmasi Bayar
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
