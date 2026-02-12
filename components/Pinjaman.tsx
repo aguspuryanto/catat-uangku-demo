@@ -493,17 +493,24 @@ const Pinjaman: React.FC = () => {
                       <td className="py-4 px-4 text-center">
                         <div className="flex flex-col items-center gap-2">
                           {/* Status Badge */}
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${
+                            angsuran.status === 'terbayar' 
+                              ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                              : 'bg-amber-100 text-amber-700 border border-amber-200'
+                          }`}>
                             {angsuran.status === 'terbayar' ? (
                               <><CheckCircle size={12} /> <span>Lunas</span></>
                             ) : (
                               <><XCircle size={12} /> <span>Belum</span></>
                             )}
                           </span>
-                          
+
                           {/* Action Button - Hanya untuk yang belum lunas */}
                           {angsuran.status === 'belum_terbayar' && (
-                            <button onClick={() => toggleStatusAngsuran(angsuran.id)}>
+                            <button
+                              onClick={() => toggleStatusAngsuran(angsuran.id)}
+                              className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200"
+                            >
                               Bayar
                             </button>
                           )}
