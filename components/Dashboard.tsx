@@ -191,7 +191,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
                 </div>
                 <span className="text-[9px] font-black uppercase tracking-wider text-emerald-300">Pemasukan</span>
               </div>
-              <p className="font-bold text-xl text-emerald-100">{formatCurrency(summary.income)}</p>
+              <p className="font-bold text-xl sm:text-2xl text-emerald-100 truncate">{formatCurrency(summary.income)}</p>
             </div>
 
             <div className="bg-red-500/10 backdrop-blur-sm p-5 rounded-3xl border border-red-500/30 hover:bg-red-500/15 transition-all duration-300">
@@ -201,7 +201,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
                 </div>
                 <span className="text-[9px] font-black uppercase tracking-wider text-red-300">Pengeluaran</span>
               </div>
-              <p className="font-bold text-xl text-red-100">{formatCurrency(summary.expense)}</p>
+              <p className="font-bold text-xl sm:text-2xl text-red-100 truncate">{formatCurrency(summary.expense)}</p>
             </div>
           </div>
         </div>

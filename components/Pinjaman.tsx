@@ -459,16 +459,16 @@ const Pinjaman: React.FC = () => {
             <p className="text-slate-500">Jadual pembayaran dan status angsuran pinjaman</p>
           </div>
 
-          {/* Tabel Angsuran */}
-          <div className="overflow-x-auto -mx-8 px-8">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto -mx-8 px-8">
             <div className="min-w-full">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50">
                     <th className="text-left py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">No</th>
                     <th className="text-left py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Jatuh Tempo</th>
-                    <th className="text-right py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider hidden sm:table-cell">Pokok</th>
-                    <th className="text-right py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider hidden sm:table-cell">Bunga</th>
+                    <th className="text-right py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider hidden lg:table-cell">Pokok</th>
+                    <th className="text-right py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider hidden lg:table-cell">Bunga</th>
                     <th className="text-right py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Total</th>
                     <th className="text-right py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider hidden lg:table-cell">Sisa Pinjaman</th>
                     <th className="text-center py-4 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Status</th>
@@ -486,8 +486,8 @@ const Pinjaman: React.FC = () => {
                           <span className="font-medium">{formatDate(angsuran.jatuhTempo)}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-sm text-right text-slate-900 hidden sm:table-cell font-medium">{formatRupiah(angsuran.pokok)}</td>
-                      <td className="py-4 px-4 text-sm text-right text-slate-900 hidden sm:table-cell font-medium">{formatRupiah(angsuran.bunga)}</td>
+                      <td className="py-4 px-4 text-sm text-right text-slate-900 hidden lg:table-cell font-medium">{formatRupiah(angsuran.pokok)}</td>
+                      <td className="py-4 px-4 text-sm text-right text-slate-900 hidden lg:table-cell font-medium">{formatRupiah(angsuran.bunga)}</td>
                       <td className="py-4 px-4 text-sm text-right font-bold text-slate-900">{formatRupiah(angsuran.jumlah)}</td>
                       <td className="py-4 px-4 text-sm text-right text-slate-900 hidden lg:table-cell font-medium">{formatRupiah(angsuran.sisaPinjaman)}</td>
                       <td className="py-4 px-4 text-center">
@@ -529,6 +529,80 @@ const Pinjaman: React.FC = () => {
                   </tr>
                 </tfoot>
               </table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden -mx-8">
+            <div className="divide-y divide-slate-100">
+              {pinjaman.angsuran.map((angsuran, index) => (
+                <div 
+                  key={angsuran.id}
+                  className={`px-4 py-4 first:rounded-t-2xl last:rounded-b-2xl border-b transition-colors ${
+                    angsuran.status === 'terbayar' 
+                      ? 'bg-emerald-50 border-emerald-100' 
+                      : 'bg-white active:bg-slate-50 border-slate-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-2xl shrink-0 ${
+                      angsuran.status === 'terbayar' 
+                        ? 'bg-emerald-100 text-emerald-600' 
+                        : 'bg-amber-100 text-amber-600'
+                    }`}>
+                      {angsuran.status === 'terbayar' ? (
+                        <CheckCircle size={16} />
+                      ) : (
+                        <XCircle size={16} />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center">
+                        <h4 className="font-bold text-sm truncate pr-2 text-slate-800">
+                          Angsuran ke-{index + 1}
+                        </h4>
+                        <span className="font-bold text-sm whitespace-nowrap text-slate-900">
+                          {formatRupiah(angsuran.jumlah)}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-0.5 mt-1">
+                        <div className="flex items-center gap-2">
+                          <Calendar size={12} className="text-slate-400" />
+                          <span className="text-xs text-slate-500">
+                            {formatDate(angsuran.jatuhTempo)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`text-xs font-medium ${
+                            angsuran.status === 'terbayar' ? 'text-emerald-600' : 'text-amber-600'
+                          }`}>
+                            {angsuran.status === 'terbayar' ? 'Lunas' : 'Belum Lunas'}
+                          </span>
+                        </div>
+                      </div>
+                      {/* Action Button */}
+                      {angsuran.status === 'belum_terbayar' && (
+                        <button
+                          onClick={() => toggleStatusAngsuran(angsuran.id)}
+                          className="mt-3 w-full px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200"
+                        >
+                          Bayar Sekarang
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Total Summary for Mobile */}
+            <div className="bg-slate-100 border-t-2 border-slate-200 px-4 py-4 rounded-b-2xl">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-bold text-slate-900 uppercase tracking-wider">Total</span>
+                <span className="text-sm font-bold text-slate-900">
+                  {formatRupiah(pinjaman.angsuran.reduce((sum, a) => sum + a.jumlah, 0))}
+                </span>
+              </div>
             </div>
           </div>
         </div>
