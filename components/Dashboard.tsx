@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { Transaction, MainCategory } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
-import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, LayoutGrid, Home, ShoppingBag, ShieldAlert, BadgeDollarSign, Heart, ArrowUpRight, ArrowDownLeft, CreditCard } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, LayoutGrid, Home, ShoppingBag, ShieldAlert, BadgeDollarSign, Heart, ArrowUpRight, ArrowDownLeft, CreditCard, Plus } from 'lucide-react';
 import { COLORS } from '../constants';
 import CategoryTransactions from './CategoryTransactions';
 
@@ -150,189 +150,271 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
-      {/* Period Indicator */}
-      <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 border border-indigo-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-indigo-600 rounded-full shadow-lg shadow-indigo-200">
-            <TrendingUp size={16} className="text-white" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider">Periode Aktif</p>
-            <p className="text-sm font-black text-indigo-900">{getPeriodDisplay()}</p>
-          </div>
-        </div>
-        <div className="text-xs font-bold text-indigo-700 bg-indigo-200/50 px-4 py-2 rounded-full border border-indigo-300">
-          {filteredTransactions.length} Transaksi
-        </div>
-      </div>
-      {/* Premium Balance Card */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-6 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-indigo-950/40 text-white border border-indigo-800/20">
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-indigo-500/5 rounded-full blur-3xl"></div>
-
-        <div className="relative z-10">
-          <div className="flex justify-between items-center mb-8">
-            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-indigo-300/90">Total Net Worth</span>
-            <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-bold border border-white/20 flex items-center gap-2">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-              IDR • Indonesia
+    <div className="min-h-screen bg-[#F8F9FA] animate-in fade-in slide-in-from-bottom-6 duration-700">
+      {/* Super App Header */}
+      {/* <div className="bg-white border-b border-[#E5E7EB] px-4 py-3 sticky top-0 z-30">
+        <div className="flex items-center justify-between max-w-6xl mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
+              <Wallet size={16} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-[#1F2937]">UangKita</h1>
+              <p className="text-[9px] text-[#6B7280] font-medium">Financial Super App</p>
             </div>
           </div>
-
-          <h2 className="text-4xl sm:text-5xl font-black mb-8 tracking-tight">{formatCurrency(balance)}</h2>
-
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-emerald-500/10 backdrop-blur-sm p-5 rounded-3xl border border-emerald-500/30 hover:bg-emerald-500/15 transition-all duration-300">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-emerald-500 rounded-full text-white shadow-lg shadow-emerald-500/30">
-                  <ArrowUpRight size={12} strokeWidth={3} />
-                </div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-emerald-300">Pemasukan</span>
-              </div>
-              <p className="font-bold text-xl sm:text-2xl text-emerald-100 truncate">{formatCurrency(summary.income)}</p>
-            </div>
-
-            <div className="bg-red-500/10 backdrop-blur-sm p-5 rounded-3xl border border-red-500/30 hover:bg-red-500/15 transition-all duration-300">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-red-500 rounded-full text-white shadow-lg shadow-red-500/30">
-                  <ArrowDownLeft size={12} strokeWidth={3} />
-                </div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-red-300">Pengeluaran</span>
-              </div>
-              <p className="font-bold text-xl sm:text-2xl text-red-100 truncate">{formatCurrency(summary.expense)}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Categories Horizontal Scroll / Grid */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2">
-            <LayoutGrid className="text-indigo-600" size={18} />
-            <h3 className="font-black text-slate-800 tracking-tight">Alokasi Dana</h3>
+            <div className="bg-[#F3F4F6] px-3 py-1.5 rounded-full">
+              <span className="text-[10px] font-bold text-[#374151] uppercase tracking-wider">Premium</span>
+            </div>
           </div>
         </div>
+      </div> */}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          {categoryTotals.map((cat) => (
-            <div 
-              key={cat.name} 
-              className="group bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-300 cursor-pointer"
-              onClick={() => setSelectedCategory(cat.name)}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="p-2 bg-slate-50 rounded-xl group-hover:bg-indigo-50 transition-colors">
-                  {getCategoryIcon(cat.name)}
+      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+        {/* Premium Balance Card */}
+        <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl p-6 shadow-lg border border-emerald-700/20 relative overflow-hidden">
+          {/* Subtle noise texture overlay */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj4KICA8ZmlsdGVyIGlkPSJub2lzZSI+CiAgICA8ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iLjc1IiBudW1PY3RhdmVzPSI0IiAvPgogIDwvZmlsdGVyPgogIDxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWx0ZXI9InVybCgjbm9pc2UpIiBvcGFjaXR5PSIwLjAzIiAvPgo8L3N2Zz4=')] opacity-5"></div>
+          
+          <div className="relative z-10">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <p className="text-[11px] font-medium text-emerald-100 uppercase tracking-wider mb-1">Total Balance</p>
+                <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">{formatCurrency(balance)}</h2>
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                <span className="text-[10px] font-bold text-white">IDR</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 bg-emerald-400 rounded-lg flex items-center justify-center">
+                    <ArrowUpRight size={12} className="text-white" />
+                  </div>
+                  <span className="text-[9px] font-medium text-emerald-100">Income</span>
                 </div>
-                <span className="text-[9px] font-black text-slate-300 group-hover:text-indigo-400 transition-colors">
-                  {Math.round(summary.expense > 0 ? (cat.total / summary.expense) * 100 : 0)}%
-                </span>
+                <p className="text-lg font-bold text-white">{formatCurrency(summary.income)}</p>
               </div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 truncate">
-                {cat.name}
-              </p>
-              <p className="text-sm font-black text-slate-800 truncate">
-                {formatCurrency(cat.total)}
-              </p>
-              <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out"
-                  style={{ width: `${summary.expense > 0 ? (cat.total / summary.expense) * 100 : 0}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
 
-      {/* Main Stats Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Expenses Chart */}
-        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2">
-              <PieIcon className="text-indigo-600" size={18} />
-              <h3 className="font-black text-slate-800 tracking-tight">Komposisi Biaya</h3>
-            </div>
-          </div>
-          <div className="h-[300px]">
-            {expenseBreakdown.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={expenseBreakdown}
-                    innerRadius={70}
-                    outerRadius={100}
-                    paddingAngle={10}
-                    dataKey="value"
-                  >
-                    {expenseBreakdown.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS.chart[index % COLORS.chart.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '12px 16px' }}
-                    itemStyle={{ fontWeight: 'bold' }}
-                    formatter={(value: number) => formatCurrency(value)}
-                  />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-2">
-                <PieIcon size={40} className="opacity-20" />
-                <p className="text-sm font-medium">Belum ada data pengeluaran</p>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 bg-red-400 rounded-lg flex items-center justify-center">
+                    <ArrowDownLeft size={12} className="text-white" />
+                  </div>
+                  <span className="text-[9px] font-medium text-emerald-100">Expense</span>
+                </div>
+                <p className="text-lg font-bold text-white">{formatCurrency(summary.expense)}</p>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
-        {/* Monthly Trend */}
-        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="text-indigo-600" size={18} />
-              <h3 className="font-black text-slate-800 tracking-tight">Arus Kas Bulanan</h3>
-            </div>
-          </div>
-          <div className="h-[300px]">
-            {monthlyHistory.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyHistory} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
-                  <XAxis dataKey="month" stroke="#cbd5e1" fontSize={10} fontWeight="bold" tickLine={false} axisLine={false} dy={10} />
-                  <YAxis hide />
-                  <Tooltip
-                    cursor={{ fill: '#f8fafc', radius: 12 }}
-                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '12px 16px' }}
-                    formatter={(value: number) => formatCurrency(value)}
-                  />
-                  <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} iconType="circle" />
-                  <Bar dataKey="income" name="Income" fill={COLORS.income} radius={[8, 8, 8, 8]} barSize={20} />
-                  <Bar dataKey="expense" name="Expense" fill={COLORS.expense} radius={[8, 8, 8, 8]} barSize={20} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-2">
-                <TrendingUp size={40} className="opacity-20" />
-                <p className="text-sm font-medium">Data transaksi kosong</p>
+        {/* Quick Actions */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#E5E7EB]">
+          <h3 className="text-sm font-bold text-[#1F2937] mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-4 gap-3">
+            <button className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[#F9FAFB] transition-colors">
+              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                <Plus size={18} className="text-emerald-600" />
               </div>
-            )}
+              <span className="text-[10px] font-medium text-[#374151]">Top Up</span>
+            </button>
+            <button className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[#F9FAFB] transition-colors">
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <CreditCard size={18} className="text-blue-600" />
+              </div>
+              <span className="text-[10px] font-medium text-[#374151]">Transfer</span>
+            </button>
+            <button className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[#F9FAFB] transition-colors">
+              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                <LayoutGrid size={18} className="text-purple-600" />
+              </div>
+              <span className="text-[10px] font-medium text-[#374151]">Budget</span>
+            </button>
+            <button className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[#F9FAFB] transition-colors">
+              <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                <TrendingUp size={18} className="text-orange-600" />
+              </div>
+              <span className="text-[10px] font-medium text-[#374151]">History</span>
+            </button>
           </div>
         </div>
+
+        {/* Period Indicator */}
+        {/* <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#E5E7EB] flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+              <TrendingUp size={16} className="text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-[#374151] uppercase tracking-wider">Active Period</p>
+              <p className="text-sm font-bold text-[#1F2937]">{getPeriodDisplay()}</p>
+            </div>
+          </div>
+          <div className="bg-emerald-100 px-3 py-1.5 rounded-full">
+            <span className="text-xs font-bold text-emerald-700">{filteredTransactions.length} Transactions</span>
+          </div>
+        </div> */}
+
+      {/* Budget Categories */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-2">
+              <LayoutGrid className="text-emerald-600" size={18} />
+              <h3 className="font-bold text-[#1F2937] tracking-tight">Budget Categories</h3>
+            </div>
+            <button className="text-xs font-medium text-emerald-600 hover:text-emerald-700">See All</button>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {categoryTotals.map((cat) => (
+              <div 
+                key={cat.name} 
+                className="bg-white p-4 rounded-2xl border border-[#E5E7EB] shadow-sm hover:shadow-md hover:border-emerald-200 transition-all duration-300 cursor-pointer"
+                onClick={() => setSelectedCategory(cat.name)}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-8 h-8 bg-[#F9FAFB] rounded-xl flex items-center justify-center group-hover:bg-emerald-50 transition-colors">
+                    {getCategoryIcon(cat.name)}
+                  </div>
+                  <span className="text-[9px] font-bold text-[#6B7280] group-hover:text-emerald-600 transition-colors">
+                    {Math.round(summary.expense > 0 ? (cat.total / summary.expense) * 100 : 0)}%
+                  </span>
+                </div>
+                <p className="text-[10px] font-bold text-[#374151] uppercase tracking-wider mb-1 truncate">
+                  {cat.name}
+                </p>
+                <p className="text-sm font-bold text-[#1F2937] truncate">
+                  {formatCurrency(cat.total)}
+                </p>
+                <div className="mt-3 h-1 w-full bg-[#F3F4F6] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${summary.expense > 0 ? (cat.total / summary.expense) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Analytics Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Expenses Chart */}
+          <div className="bg-white p-6 rounded-2xl border border-[#E5E7EB] shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <PieIcon className="text-emerald-600" size={18} />
+                <h3 className="font-bold text-[#1F2937] tracking-tight">Expense Breakdown</h3>
+              </div>
+            </div>
+            <div className="h-[280px]">
+              {expenseBreakdown.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={expenseBreakdown}
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={8}
+                      dataKey="value"
+                    >
+                      {expenseBreakdown.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS.chart[index % COLORS.chart.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', padding: '10px 14px' }}
+                      itemStyle={{ fontWeight: 'bold' }}
+                      formatter={(value: number) => formatCurrency(value)}
+                    />
+                    <Legend 
+                      verticalAlign="bottom" 
+                      height={36} 
+                      iconType="circle" 
+                      wrapperStyle={{ paddingTop: '16px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} 
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-[#9CA3AF] space-y-2">
+                  <PieIcon size={40} className="opacity-20" />
+                  <p className="text-sm font-medium">No expense data</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Monthly Trend */}
+          <div className="bg-white p-6 rounded-2xl border border-[#E5E7EB] shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="text-emerald-600" size={18} />
+                <h3 className="font-bold text-[#1F2937] tracking-tight">Monthly Trend</h3>
+              </div>
+            </div>
+            <div className="h-[280px]">
+              {monthlyHistory.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyHistory} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                    <XAxis 
+                      dataKey="month" 
+                      stroke="#E5E7EB" 
+                      fontSize={10} 
+                      fontWeight="bold" 
+                      tickLine={false} 
+                      axisLine={false} 
+                      dy={10} 
+                    />
+                    <YAxis hide />
+                    <Tooltip
+                      cursor={{ fill: '#F9FAFB', radius: 8 }}
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', padding: '10px 14px' }}
+                      formatter={(value: number) => formatCurrency(value)}
+                    />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '16px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} 
+                      iconType="circle" 
+                    />
+                    <Bar 
+                      dataKey="income" 
+                      name="Income" 
+                      fill={COLORS.income} 
+                      radius={[6, 6, 6, 6]} 
+                      barSize={16} 
+                    />
+                    <Bar 
+                      dataKey="expense" 
+                      name="Expense" 
+                      fill={COLORS.expense} 
+                      radius={[6, 6, 6, 6]} 
+                      barSize={16} 
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-[#9CA3AF] space-y-2">
+                  <TrendingUp size={40} className="opacity-20" />
+                  <p className="text-sm font-medium">No transaction data</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Category Transactions Modal */}
+        {selectedCategory && (
+          <CategoryTransactions
+            transactions={filteredTransactions}
+            categoryName={selectedCategory}
+            onClose={() => setSelectedCategory(null)}
+            showAsModal={true}
+          />
+        )}
       </div>
-
-      {/* Category Transactions Modal */}
-      {selectedCategory && (
-        <CategoryTransactions
-          transactions={filteredTransactions}
-          categoryName={selectedCategory}
-          onClose={() => setSelectedCategory(null)}
-          showAsModal={true}
-        />
-      )}
     </div>
   );
 };

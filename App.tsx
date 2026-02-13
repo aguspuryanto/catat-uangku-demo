@@ -1,15 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Layout from './components/Layout';
-import Dashboard from './components/Dashboard';
-import TransactionList from './components/TransactionList';
-import TransactionForm from './components/TransactionForm';
-import Pinjaman from './components/Pinjaman';
 import LoginPage from './pages/LoginPage';
 import { Transaction, User } from './types';
 import { Plus } from 'lucide-react';
 
 import { getTransactions, createTransaction, removeTransaction } from './utils/supabase';
+
+// Code Splitting - Lazy load components
+const Dashboard = React.lazy(() => import('./components/Dashboard'));
+const TransactionList = React.lazy(() => import('./components/TransactionList'));
+const TransactionForm = React.lazy(() => import('./components/TransactionForm'));
+const Pinjaman = React.lazy(() => import('./components/Pinjaman'));
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User>({ email: '', isAuthenticated: false });
@@ -93,35 +95,68 @@ const App: React.FC = () => {
     >
       <div className="max-w-6xl mx-auto pb-10">
         {activeTab === 'dashboard' && (
-          <>
-            <header className="mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-6 px-2">
-              <div>
-                <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-none mb-3">
-                  Halo, {user.email.split('@')[0]} 👋
-                </h1>
-                <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[11px]">Your Financial Ecosystem</p>
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center animate-pulse">
+                  <div className="w-6 h-6 bg-emerald-500 rounded-lg animate-spin"></div>
+                </div>
+                <p className="text-sm font-medium text-[#6B7280]">Loading Dashboard...</p>
               </div>
-            </header>
-            <Dashboard transactions={transactions} />
-          </>
+            </div>
+          }>
+            <>
+              {/* <header className="mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-6 px-2">
+                <div>
+                  <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-none mb-3">
+                    Halo, {user.email.split('@')[0]} 👋
+                  </h1>
+                  <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[11px]">Your Financial Ecosystem</p>
+                </div>
+              </header> */}
+              <Dashboard transactions={transactions} />
+            </>
+          </Suspense>
         )}
 
         {activeTab === 'transactions' && (
-          <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
-            <TransactionForm onAdd={addTransaction} isOpen={isFormOpen} onOpenChange={setIsFormOpen} />
-            <TransactionList
-              transactions={transactions}
-              onDelete={deleteTransaction}
-              isConnected={isSupabaseConnected}
-              onAddTransaction={() => setIsFormOpen(true)}
-            />
-          </div>
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center animate-pulse">
+                  <div className="w-6 h-6 bg-blue-500 rounded-lg animate-spin"></div>
+                </div>
+                <p className="text-sm font-medium text-[#6B7280]">Loading Transactions...</p>
+              </div>
+            </div>
+          }>
+            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
+              <TransactionForm onAdd={addTransaction} isOpen={isFormOpen} onOpenChange={setIsFormOpen} />
+              <TransactionList
+                transactions={transactions}
+                onDelete={deleteTransaction}
+                isConnected={isSupabaseConnected}
+                onAddTransaction={() => setIsFormOpen(true)}
+              />
+            </div>
+          </Suspense>
         )}
 
         {activeTab === 'pinjaman' && (
-          <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-            <Pinjaman />
-          </div>
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center animate-pulse">
+                  <div className="w-6 h-6 bg-purple-500 rounded-lg animate-spin"></div>
+                </div>
+                <p className="text-sm font-medium text-[#6B7280]">Loading Loans...</p>
+              </div>
+            </div>
+          }>
+            <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
+              <Pinjaman />
+            </div>
+          </Suspense>
         )}
 
       </div>
@@ -130,9 +165,9 @@ const App: React.FC = () => {
       {activeTab === 'dashboard' && (
         <button
           onClick={() => setActiveTab('transactions')}
-          className="md:hidden fixed bottom-24 right-6 w-16 h-16 bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-[2rem] shadow-2xl shadow-indigo-500/40 flex items-center justify-center z-50 active:scale-90 transition-all duration-200 hover:from-indigo-700 hover:to-indigo-800"
+          className="md:hidden fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-xl shadow-xl shadow-indigo-500/40 flex items-center justify-center z-50 active:scale-90 transition-all duration-200 hover:from-indigo-700 hover:to-indigo-800"
         >
-          <Plus size={32} strokeWidth={3} />
+          <Plus size={28} strokeWidth={2.5} />
         </button>
       )}
     </Layout>
