@@ -171,7 +171,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
         </div>
       </div> */}
 
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-6xl mx-auto py-4 space-y-6">
         {/* Premium Balance Card */}
         <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl p-6 shadow-lg border border-emerald-700/20 relative overflow-hidden">
           {/* Subtle noise texture overlay */}
