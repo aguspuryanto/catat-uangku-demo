@@ -20,5 +20,8 @@ export default defineConfig(({ mode }) => {
     build: {
       chunkSizeWarningLimit: 1500,
     },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'lucide-react', 'recharts', '@supabase/supabase-js', 'react-is'],
+    },
   };
 });
