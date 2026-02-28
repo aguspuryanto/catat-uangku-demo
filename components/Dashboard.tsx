@@ -48,8 +48,14 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
     endDate = new Date(displayYear, displayMonth, 28); // 28 bulan display month
     
     return transactions.filter(t => {
+      // Handle timezone properly - convert to local date
       const transactionDate = new Date(t.createdAt);
-      return transactionDate >= startDate && transactionDate <= endDate;
+      // Normalize dates to avoid timezone issues
+      const normalizedTransactionDate = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
+      const normalizedStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const normalizedEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      
+      return normalizedTransactionDate >= normalizedStartDate && normalizedTransactionDate <= normalizedEndDate;
     });
   }, [transactions]);
 
@@ -213,7 +219,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#E5E7EB]">
+        {/* <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#E5E7EB]">
           <h3 className="text-sm font-bold text-[#1F2937] mb-4">Quick Actions</h3>
           <div className="grid grid-cols-4 gap-3">
             <button className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[#F9FAFB] transition-colors">
@@ -241,7 +247,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
               <span className="text-[10px] font-medium text-[#374151]">History</span>
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Period Indicator */}
         {/* <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#E5E7EB] flex items-center justify-between">

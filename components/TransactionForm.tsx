@@ -105,7 +105,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd, isOpen, onOpen
               </div>
             </div>
 
-            {type === 'expense' && (
+            {(type === 'expense' || type === 'income') && (
               <>
                 {/* Category Select */}
                 <div className="space-y-3">

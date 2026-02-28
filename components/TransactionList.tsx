@@ -73,10 +73,17 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
   // Filter transaksi berdasarkan periode yang dipilih
   const filteredTransactions = useMemo(() => {
     const { startDate, endDate } = getPeriodDates(selectedPeriodIndex);
+    console.log(startDate, endDate);
     
     return transactions.filter(t => {
+      // Handle timezone properly - convert to local date
       const transactionDate = new Date(t.createdAt);
-      return transactionDate >= startDate && transactionDate <= endDate;
+      // Normalize dates to avoid timezone issues
+      const normalizedTransactionDate = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
+      const normalizedStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const normalizedEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      
+      return normalizedTransactionDate >= normalizedStartDate && normalizedTransactionDate <= normalizedEndDate;
     });
   }, [transactions, selectedPeriodIndex]);
   
