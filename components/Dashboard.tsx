@@ -40,6 +40,8 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
     // Start date: 29 bulan sebelumnya dari display month
     if (displayMonth === 0) { // Januari
       startDate = new Date(displayYear - 1, 11, 29); // 29 Desember tahun sebelumnya
+    } else if (displayMonth === 1) {
+      startDate = new Date(displayYear, 0, 27); // 27 Februari
     } else {
       startDate = new Date(displayYear, displayMonth - 1, 29); // 29 bulan sebelumnya
     }
@@ -68,6 +70,18 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
   }, [filteredTransactions]);
 
   const balance = summary.income - summary.expense;
+
+  // hitung total summary
+  const totalSummary = useMemo(() => {
+    return transactions.reduce((acc, t) => {
+      if (t.type === 'income') acc.income += t.amount;
+      else acc.expense += t.amount;
+      return acc;
+    }, { income: 0, expense: 0 });
+  }, [transactions]);
+  // console.log('totalSummary', totalSummary);
+
+  const totalBalance = totalSummary.income - totalSummary.expense;
 
   const expenseBreakdown = useMemo(() => {
     const data: Record<string, number> = {};
@@ -143,9 +157,13 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
     
     // Start date: 29 bulan sebelumnya dari display month
     if (displayMonth === 0) { // Januari
-      startDate = new Date(displayYear - 1, 11, 29);
+      startDate = new Date(displayYear - 1, 11, 29); // 29 Desember tahun sebelumnya
+    } else if (displayMonth === 1) { // Februari
+      startDate = new Date(displayYear, 0, 27); // 27 Januari (karena Februari hanya 28 hari)
+    } else if (displayMonth === 2) { // Maret
+      startDate = new Date(displayYear, 1, 29); // 29 Februari (tahun kabisat: 29, biasa: 28)
     } else {
-      startDate = new Date(displayYear, displayMonth - 1, 29);
+      startDate = new Date(displayYear, displayMonth - 1, 29); // 29 bulan sebelumnya
     }
     
     // End date: 28 bulan display month
@@ -187,7 +205,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
             <div className="flex justify-between items-start mb-6">
               <div>
                 <p className="text-[11px] font-medium text-emerald-100 uppercase tracking-wider mb-1">Total Balance</p>
-                <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">{formatCurrency(balance)}</h2>
+                <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">{formatCurrency(totalBalance)}</h2>
               </div>
               <div className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
                 <span className="text-[10px] font-bold text-white">IDR</span>
