@@ -12,23 +12,23 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  
+
   // console.log(transactions, '_transactions');
-  
+
   // Filter transaksi berdasarkan periode kustom: 29 bulan sebelumnya hingga 28 bulan saat ini
   const filteredTransactions = useMemo(() => {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth(); // 0-11
     const currentDay = now.getDate();
-    
+
     // Tentukan periode: 29 bulan sebelumnya hingga 28 bulan saat ini
     let startDate, endDate;
     let displayYear = currentYear;
     let displayMonth = currentMonth;
-    
+
     // Jika tanggal sudah melewati 28, pindah ke bulan berikutnya
-    if (currentDay > 28) {
+    if (currentDay > 30) {
       if (currentMonth === 11) { // Desember, pindah ke Januari tahun berikutnya
         displayYear = currentYear + 1;
         displayMonth = 0;
@@ -36,19 +36,19 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
         displayMonth = currentMonth + 1;
       }
     }
-    
+
     // Start date: 29 bulan sebelumnya dari display month
     if (displayMonth === 0) { // Januari
-      startDate = new Date(displayYear - 1, 11, 29); // 29 Desember tahun sebelumnya
+      startDate = new Date(displayYear - 1, 11, 30); // 29 Desember tahun sebelumnya
     } else if (displayMonth === 1) {
-      startDate = new Date(displayYear, 0, 27); // 27 Februari
+      startDate = new Date(displayYear, 0, 28); // 27 Februari
     } else {
-      startDate = new Date(displayYear, displayMonth - 1, 29); // 29 bulan sebelumnya
+      startDate = new Date(displayYear, displayMonth - 1, 30); // 29 bulan sebelumnya
     }
-    
+
     // End date: 28 bulan display month
-    endDate = new Date(displayYear, displayMonth, 28); // 28 bulan display month
-    
+    endDate = new Date(displayYear, displayMonth, 30); // 28 bulan display month
+
     return transactions.filter(t => {
       // Handle timezone properly - convert to local date
       const transactionDate = new Date(t.createdAt);
@@ -56,7 +56,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
       const normalizedTransactionDate = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
       const normalizedStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
       const normalizedEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-      
+
       return normalizedTransactionDate >= normalizedStartDate && normalizedTransactionDate <= normalizedEndDate;
     });
   }, [transactions]);
@@ -69,19 +69,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
     }, { income: 0, expense: 0 });
   }, [filteredTransactions]);
 
-  const balance = summary.income - summary.expense;
-
-  // hitung total summary
-  const totalSummary = useMemo(() => {
-    return transactions.reduce((acc, t) => {
-      if (t.type === 'income') acc.income += t.amount;
-      else acc.expense += t.amount;
-      return acc;
-    }, { income: 0, expense: 0 });
-  }, [transactions]);
-  // console.log('totalSummary', totalSummary);
-
-  const totalBalance = totalSummary.income - totalSummary.expense;
+  const totalBalance = summary.income - summary.expense;
 
   const expenseBreakdown = useMemo(() => {
     const data: Record<string, number> = {};
@@ -134,44 +122,6 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
 
   const recentTransactions = filteredTransactions.slice(0, 3);
 
-  // Format periode untuk ditampilkan
-  const getPeriodDisplay = () => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
-    const currentDay = now.getDate();
-    
-    let startDate, endDate;
-    let displayYear = currentYear;
-    let displayMonth = currentMonth;
-    
-    // Jika tanggal sudah melewati 28, pindah ke bulan berikutnya
-    if (currentDay > 28) {
-      if (currentMonth === 11) { // Desember, pindah ke Januari tahun berikutnya
-        displayYear = currentYear + 1;
-        displayMonth = 0;
-      } else {
-        displayMonth = currentMonth + 1;
-      }
-    }
-    
-    // Start date: 29 bulan sebelumnya dari display month
-    if (displayMonth === 0) { // Januari
-      startDate = new Date(displayYear - 1, 11, 29); // 29 Desember tahun sebelumnya
-    } else if (displayMonth === 1) { // Februari
-      startDate = new Date(displayYear, 0, 27); // 27 Januari (karena Februari hanya 28 hari)
-    } else if (displayMonth === 2) { // Maret
-      startDate = new Date(displayYear, 1, 29); // 29 Februari (tahun kabisat: 29, biasa: 28)
-    } else {
-      startDate = new Date(displayYear, displayMonth - 1, 29); // 29 bulan sebelumnya
-    }
-    
-    // End date: 28 bulan display month
-    endDate = new Date(displayYear, displayMonth, 28);
-    
-    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
-    return `${startDate.toLocaleDateString('id-ID', options)} - ${endDate.toLocaleDateString('id-ID', options)}`;
-  };
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] animate-in fade-in slide-in-from-bottom-6 duration-700">
@@ -200,7 +150,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
         <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl p-6 shadow-lg border border-emerald-700/20 relative overflow-hidden">
           {/* Subtle noise texture overlay */}
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj4KICA8ZmlsdGVyIGlkPSJub2lzZSI+CiAgICA8ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iLjc1IiBudW1PY3RhdmVzPSI0IiAvPgogIDwvZmlsdGVyPgogIDxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWx0ZXI9InVybCgjbm9pc2UpIiBvcGFjaXR5PSIwLjAzIiAvPgo8L3N2Zz4=')] opacity-5"></div>
-          
+
           <div className="relative z-10">
             <div className="flex justify-between items-start mb-6">
               <div>
@@ -267,23 +217,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
           </div>
         </div> */}
 
-        {/* Period Indicator */}
-        {/* <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#E5E7EB] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <TrendingUp size={16} className="text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-[#374151] uppercase tracking-wider">Active Period</p>
-              <p className="text-sm font-bold text-[#1F2937]">{getPeriodDisplay()}</p>
-            </div>
-          </div>
-          <div className="bg-emerald-100 px-3 py-1.5 rounded-full">
-            <span className="text-xs font-bold text-emerald-700">{filteredTransactions.length} Transactions</span>
-          </div>
-        </div> */}
-
-      {/* Budget Categories */}
+        {/* Budget Categories */}
         <section className="space-y-4">
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-2">
@@ -295,8 +229,8 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {categoryTotals.map((cat) => (
-              <div 
-                key={cat.name} 
+              <div
+                key={cat.name}
                 className="bg-white p-4 rounded-2xl border border-[#E5E7EB] shadow-sm hover:shadow-md hover:border-emerald-200 transition-all duration-300 cursor-pointer"
                 onClick={() => setSelectedCategory(cat.name)}
               >
@@ -355,11 +289,11 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
                       itemStyle={{ fontWeight: 'bold' }}
                       formatter={(value: number) => formatCurrency(value)}
                     />
-                    <Legend 
-                      verticalAlign="bottom" 
-                      height={36} 
-                      iconType="circle" 
-                      wrapperStyle={{ paddingTop: '16px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} 
+                    <Legend
+                      verticalAlign="bottom"
+                      height={36}
+                      iconType="circle"
+                      wrapperStyle={{ paddingTop: '16px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -384,14 +318,14 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
               {monthlyHistory.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={monthlyHistory} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                    <XAxis 
-                      dataKey="month" 
-                      stroke="#E5E7EB" 
-                      fontSize={10} 
-                      fontWeight="bold" 
-                      tickLine={false} 
-                      axisLine={false} 
-                      dy={10} 
+                    <XAxis
+                      dataKey="month"
+                      stroke="#E5E7EB"
+                      fontSize={10}
+                      fontWeight="bold"
+                      tickLine={false}
+                      axisLine={false}
+                      dy={10}
                     />
                     <YAxis hide />
                     <Tooltip
@@ -399,23 +333,23 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
                       contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', padding: '10px 14px' }}
                       formatter={(value: number) => formatCurrency(value)}
                     />
-                    <Legend 
-                      wrapperStyle={{ paddingTop: '16px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} 
-                      iconType="circle" 
+                    <Legend
+                      wrapperStyle={{ paddingTop: '16px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}
+                      iconType="circle"
                     />
-                    <Bar 
-                      dataKey="income" 
-                      name="Income" 
-                      fill={COLORS.income} 
-                      radius={[6, 6, 6, 6]} 
-                      barSize={16} 
+                    <Bar
+                      dataKey="income"
+                      name="Income"
+                      fill={COLORS.income}
+                      radius={[6, 6, 6, 6]}
+                      barSize={16}
                     />
-                    <Bar 
-                      dataKey="expense" 
-                      name="Expense" 
-                      fill={COLORS.expense} 
-                      radius={[6, 6, 6, 6]} 
-                      barSize={16} 
+                    <Bar
+                      dataKey="expense"
+                      name="Expense"
+                      fill={COLORS.expense}
+                      radius={[6, 6, 6, 6]}
+                      barSize={16}
                     />
                   </BarChart>
                 </ResponsiveContainer>
