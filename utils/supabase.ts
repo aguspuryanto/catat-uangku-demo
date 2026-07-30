@@ -32,7 +32,7 @@ export const getTransactions = async (): Promise<{ data: Transaction[], error: a
     const { data, error } = await supabase
         .from('transaksi')
         .select('*')
-        .eq('parent_id', null)
+        .is('parent_id', null)
         .order('created_at', { ascending: false });
 
     if (error) {
