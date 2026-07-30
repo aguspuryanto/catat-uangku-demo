@@ -8,30 +8,31 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const formatRupiah = (amount: number): string => {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0
-  }).format(amount);
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+    }).format(amount);
 };
 
 export const formatRupiahHuman = (amount: number): string => {
-  if (amount >= 1000000000) {
-    return `Rp ${(amount / 1000000000).toFixed(1).replace(/\.0$/, '')} Miliar`;
-  }
-  if (amount >= 1000000) {
-    return `Rp ${(amount / 1000000).toFixed(1).replace(/\.0$/, '')} Juta`;
-  }
-  if (amount >= 1000) {
-    return `Rp ${(amount / 1000).toFixed(1).replace(/\.0$/, '')} Ribu`;
-  }
-  return formatRupiah(amount);
+    if (amount >= 1000000000) {
+        return `Rp ${(amount / 1000000000).toFixed(1).replace(/\.0$/, '')} Miliar`;
+    }
+    if (amount >= 1000000) {
+        return `Rp ${(amount / 1000000).toFixed(1).replace(/\.0$/, '')} Juta`;
+    }
+    if (amount >= 1000) {
+        return `Rp ${(amount / 1000).toFixed(1).replace(/\.0$/, '')} Ribu`;
+    }
+    return formatRupiah(amount);
 };
 
 export const getTransactions = async (): Promise<{ data: Transaction[], error: any }> => {
     const { data, error } = await supabase
         .from('transaksi')
         .select('*')
+        .eq('parent_id', null)
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -89,7 +90,7 @@ export const removeTransaction = async (id: string) => {
 // PINJAMAN FUNCTIONS
 export const getPinjaman = async (): Promise<{ data: Pinjaman[], error: any }> => {
     console.log('Fetching pinjaman from Supabase...');
-    
+
     const { data: pinjamanData, error: pinjamanError } = await supabase
         .from('pinjaman')
         .select('*')
@@ -110,7 +111,7 @@ export const getPinjaman = async (): Promise<{ data: Pinjaman[], error: any }> =
     const pinjamanWithAngsuran = await Promise.all(
         pinjamanData.map(async (pinjaman: any) => {
             // console.log('Fetching angsuran for pinjaman ID:', pinjaman.id);
-            
+
             const { data: angsuranData, error: angsuranError } = await supabase
                 .from('angsuran')
                 .select('*')
@@ -188,7 +189,7 @@ export const createPinjaman = async (pinjaman: Pinjaman): Promise<{ data: any, e
 };
 
 export const updateAngsuranStatus = async (
-    angsuranId: string, 
+    angsuranId: string,
     status: 'terbayar' | 'belum_terbayar',
     paymentData?: {
         tanggalBayar?: string;
@@ -196,13 +197,13 @@ export const updateAngsuranStatus = async (
     }
 ): Promise<{ error: any }> => {
     const updateData: any = { status };
-    
+
     // Add payment data if marking as paid
     if (status === 'terbayar' && paymentData) {
         updateData.tanggal_bayar = paymentData.tanggalBayar;
         updateData.bukti_bayar = paymentData.buktiBayar;
     }
-    
+
     const { error } = await supabase
         .from('angsuran')
         .update(updateData)
